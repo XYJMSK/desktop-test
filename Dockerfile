@@ -16,5 +16,5 @@ RUN apt-get update && apt-get install -y \
 
 RUN npm install -g claude-code-best
 
-# Simple entrypoint - just keep container running
-CMD ["bash", "-c", "tail -f /dev/null"]
+EXPOSE 7860
+ENTRYPOINT ["bash", "-c", "tail -f /dev/null"]
