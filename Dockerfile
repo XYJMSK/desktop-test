@@ -16,5 +16,8 @@ RUN apt-get update && apt-get install -y \
 
 RUN npm install -g claude-code-best
 
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 7860
-ENTRYPOINT ["bash", "-c", "tail -f /dev/null"]
+ENTRYPOINT ["/entrypoint.sh"]
