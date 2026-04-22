@@ -10,8 +10,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && node --version && npm --version
 
 RUN apt-get update && apt-get install -y \
-    xfce4 xfce4-goodies xfce4-terminal tightvncserver novnc websockify supervisor \
-    dbus-x11 x11-utils x11-xserver-utils fonts-noto-cjk xvfb \
+    xfce4 xfce4-goodies xfce4-terminal novnc websockify supervisor \
+    dbus-x11 x11-utils x11-xserver-utils fonts-noto-cjk xvfb x11vnc \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g claude-code-best
