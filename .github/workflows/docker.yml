@@ -20,10 +20,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pull base image
-        run: docker pull ghcr.io/xyjmsk/openclaw_computer:latest
+          username: \${{ github.actor }}
+          password: \${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
