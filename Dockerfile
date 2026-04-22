@@ -1,8 +1,10 @@
 FROM ghcr.io/xyjmsk/ubuntu_test:latest
 
-# 在容器内启动自己的 Xvfb + x11vnc + noVNC
+# 完全重新启动桌面，使用 desktop-test 的方式
+RUN apt-get update && apt-get install -y xfce4 xfce4-terminal && rm -rf /var/lib/apt/lists/*
+
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
 EXPOSE 7860
-
-RUN apt-get update && apt-get install -y x11vnc xvfb && rm -rf /var/lib/apt/lists/*
-
-CMD ["sh", "-c", "Xvfb :1 -screen 0 1920x1080x24 & sleep 1 && x11vnc -display :1 -shared -forever & sleep 1 && websockify --web /usr/share/novnc 7860 localhost:5900"]
+CMD ["/start.sh"]
