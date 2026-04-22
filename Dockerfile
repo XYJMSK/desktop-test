@@ -23,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     x11-xserver-utils \
     xdg-utils \
     tigervnc-standalone-server \
-    tigervnc-xserver-extension \
     novnc \
     && rm -rf /var/lib/apt/lists/*
 
