@@ -2,10 +2,6 @@
 # Claude Desktop on ModelScope
 # Based on: ghcr.io/tunmax/openclaw_computer:latest
 # ================================================================
-# 
-# 直接使用 openclaw_computer，它已在 ModelScope 验证通过
-# 只添加 Claude Code Best，保留原有桌面环境
-# ================================================================
 
 FROM ghcr.io/tunmax/openclaw_computer:latest
 
@@ -17,12 +13,5 @@ RUN apt-get update && apt-get install -y npm nodejs && \
     npm install -g claude-code-best && \
     rm -rf /var/lib/apt/lists/*
 
-# 重命名原 entrypoint，保留桌面启动
-RUN mv /entrypoint.sh /entrypoint-openclaw.sh
-
-# 我们的启动脚本（初始化 + 调用原 entrypoint）
-COPY start.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# openclaw_computer 已暴露 7860 端口
+# 直接使用原 entrypoint，不做 wrapper
 EXPOSE 7860
