@@ -19,7 +19,7 @@ sleep 2
 vncserver :1 -geometry ${VNC_RESOLUTION} -depth 24 -localhost no
 
 # Start noVNC (websocket to VNC proxy)
-/usr/libexec/noVNCdim/utils/novnc_proxy --vnc localhost:${VNC_PORT} --listen ${NOVNC_PORT} &
+/usr/share/novnc/launch.sh --vnc localhost:${VNC_PORT} --listen ${NOVNC_PORT} &
 
 # Keep container running
 tail -f /dev/null

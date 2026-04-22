@@ -22,6 +22,9 @@ RUN apt-get update && apt-get install -y \
     xinit \
     x11-xserver-utils \
     xdg-utils \
+    tigervnc-standalone-server \
+    tigervnc-xserver-extension \
+    novnc \
     && rm -rf /var/lib/apt/lists/*
 
 # Install XFCE
@@ -30,21 +33,6 @@ RUN apt-get update && apt-get install -y \
     xfce4-terminal \
     elementary-xfce-icon-theme \
     && rm -rf /var/lib/apt/lists/*
-
-# Install TigerVNC
-RUN wget -q https://sourceforge.net/projects/tigervnc/files/stable/1.13.1/tigervnc-1.13.1.ubuntu22.04.x86_64.tar.gz -O /tmp/tigervnc.tar.gz \
-    && tar xzf /tmp/tigervnc.tar.gz -C /usr --strip 1 \
-    && rm /tmp/tigervnc.tar.gz
-
-# Install noVNC
-RUN wget -q https://github.com/novnc/noVNC/archive/v1.4.0.tar.gz -O /tmp/novnc.tar.gz \
-    && tar xzf /tmp/novnc.tar.gz -C /usr/libexec --strip 1 \
-    && mv /usr/libexec/noVNC /usr/libexec/noVNCdim \
-    && rm /tmp/novnc.tar.gz
-
-RUN wget -q https://github.com/novnc/websockify/archive/v0.11.0.tar.gz -O /tmp/websockify.tar.gz \
-    && tar xzf /tmp/websockify.tar.gz -C /usr/libexec/noVNCdim/utils --strip 1 \
-    && rm /tmp/websockify.tar.gz
 
 # Create startup script
 RUN mkdir -p /dockerstartup
