@@ -16,9 +16,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN npm install -g claude-code-best
 
-RUN mkdir -p /root/.vnc && \
-    echo "claude2024" | vncpasswd -f > /root/.vnc/passwd && \
-    chmod 600 /root/.vnc/passwd
+RUN mkdir -p /root/.vnc
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 COPY scripts/xstartup /root/.vnc/xstartup
