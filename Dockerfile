@@ -1,4 +1,4 @@
-FROM ghcr.io/xyjmsk/openclaw_computer:latest
+FROM ghcr.io/xyjmsk/desktop-test:latest
 
 # 安装 Claude Code Best
 RUN apt-get update && apt-get install -y npm nodejs && \
@@ -6,3 +6,4 @@ RUN apt-get update && apt-get install -y npm nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 EXPOSE 7860
+ENTRYPOINT ["/start.sh"]
