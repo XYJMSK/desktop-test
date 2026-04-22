@@ -1,11 +1,6 @@
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV DISPLAY=:1
-ENV VNC_PORT=5901
-ENV NOVNC_PORT=6901
-ENV VNC_PW=headless
-ENV VNC_RESOLUTION=1360x768
 
 # Install basic packages
 RUN apt-get update && apt-get install -y \
@@ -39,6 +34,6 @@ RUN mkdir -p /dockerstartup
 COPY start.sh /dockerstartup/start.sh
 RUN chmod +x /dockerstartup/start.sh
 
-EXPOSE ${VNC_PORT} ${NOVNC_PORT}
+EXPOSE 7860
 
 CMD ["/dockerstartup/start.sh"]

@@ -3,12 +3,12 @@ set -e
 
 # Set password
 mkdir -p ~/.vnc
-echo "${VNC_PW}" | vncpasswd -f > ~/.vnc/passwd
+echo "headless" | vncpasswd -f > ~/.vnc/passwd
 chmod 600 ~/.vnc/passwd
 
 # Start Xvfb
-Xvfb :1 -screen 0 ${VNC_RESOLUTION}x24 &
-sleep 1
+Xvfb :1 -screen 0 1360x768x24 &
+sleep 2
 
 # Start XFCE
 export DISPLAY=:1
@@ -16,10 +16,11 @@ xfce4-session &
 sleep 2
 
 # Start TigerVNC server
-vncserver :1 -geometry ${VNC_RESOLUTION} -depth 24 -localhost no
+vncserver :1 -geometry 1360x768 -depth 24 -localhost no
+sleep 1
 
-# Start noVNC (websocket to VNC proxy)
-websockify --web /usr/share/novnc ${NOVNC_PORT} localhost:${VNC_PORT} &
+# Start noVNC on port 7860 (ModelScope requirement)
+websockify --web /usr/share/novnc 7860 localhost:5901 &
 
 # Keep container running
 tail -f /dev/null
