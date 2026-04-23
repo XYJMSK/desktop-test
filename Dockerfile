@@ -6,12 +6,15 @@ LABEL org.opencontainers.image.description="Desktop environment with QwenPaw ass
 LABEL org.opencontainers.image.licenses=MIT
 
 # ============================================================
-# 安装 Python 3.12（Debian 12 自带 3.11，qwenpaw 需要 3.10-3.13）
+# 从 bookworm-backports 安装 Python 3.12
 # ============================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get update && apt-get install -y --no-install-recommends \
+    curl && \
+    curl -fsSL https://people.debian.org/~aparicio/deb12-backports-repo.gpg.key \
+      -o /etc/apt/trusted.gpg.d/bookworm-backports.asc && \
+    echo "deb https://deb.debian.org/debian bookworm-backports main" \
+      > /etc/apt/sources.list.d/bookworm-backports.list && \
+    apt-get update && apt-get install -y -t bookworm-backports \
     python3.12 python3.12-venv python3.12-dev && \
     rm -rf /var/lib/apt/lists/*
 
