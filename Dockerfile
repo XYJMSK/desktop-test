@@ -6,27 +6,24 @@ LABEL org.opencontainers.image.description="Desktop environment with QwenPaw ass
 LABEL org.opencontainers.image.licenses=MIT
 
 # ============================================================
-# 从 bookworm-backports 安装 Python 3.12
+# 安装 uv，再用 uv 安装 Python 3.12
 # ============================================================
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl && \
-    curl -fsSL https://people.debian.org/~aparicio/deb12-backports-repo.gpg.key \
-      -o /etc/apt/trusted.gpg.d/bookworm-backports.asc && \
-    echo "deb https://deb.debian.org/debian bookworm-backports main" \
-      > /etc/apt/sources.list.d/bookworm-backports.list && \
-    apt-get update && apt-get install -y -t bookworm-backports \
-    python3.12 python3.12-venv python3.12-dev && \
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    curl -LsSf https://astral.sh/uv/0.6.6/install.sh | sh && \
     rm -rf /var/lib/apt/lists/*
 
+ENV PATH="/root/.local/bin:$PATH"
+
 # ============================================================
-# 安装 qwenpaw
+# 用 uv 安装 Python 3.12 和 qwenpaw
 # ============================================================
-RUN python3.12 -m venv /root/.qwenpaw/venv && \
+RUN uv python install 3.12 && \
+    ln -sf /root/.local/share/uv/tools/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 /usr/local/bin/python3.12 && \
+    /root/.local/share/uv/tools/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
     /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
     /root/.qwenpaw/venv/bin/pip install qwenpaw && \
     ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
 
-ENV PATH="/root/.qwenpaw/venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
 # ============================================================
