@@ -1,43 +1,42 @@
-# desktop-test: 基于 openclaw_computer + qwenpaw
-FROM ghcr.io/tunmax/openclaw_computer:latest
+# desktop-test: 基于 openclaw_computer + 自控版本 qwenpaw
+FROM ghcr.io/tunmax/openclaw_computer:qwenpaw_latest
 
 LABEL org.opencontainers.image.source=https://github.com/XYJMSK/desktop-test
-LABEL org.opencontainers.image.description="Desktop environment with QwenPaw assistant"
+LABEL org.opencontainers.image.description="Desktop environment with QwenPaw (self-controlled version)"
 LABEL org.opencontainers.image.licenses=MIT
 
 # ============================================================
-# 安装 uv，再用 uv 安装 Python 3.12
+# qwenpaw 版本控制（默认 latest，可改成具体版本如 1.1.2）
 # ============================================================
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
-    curl -LsSf https://astral.sh/uv/0.6.6/install.sh | sh && \
-    rm -rf /var/lib/apt/lists/*
+ENV QWENPAW_VERSION=latest
+
+# 清理旧的 venv（强制重新安装）
+RUN rm -rf /root/.qwenpaw/venv
+
+# ============================================================
+# 安装 uv（如果还没有）
+# ============================================================
+RUN if [ ! -f /root/.local/bin/uv ]; then \
+    apt-get update && apt-get install -y --no-install-recommends curl && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    rm -rf /var/lib/apt/lists/*; \
+    fi
 
 ENV PATH="/root/.local/bin:$PATH"
 
 # ============================================================
-# 用 uv 安装 Python 3.12 和 qwenpaw
+# 用 uv 安装 Python 3.12，创建 venv，安装 qwenpaw
 # ============================================================
-RUN uv python install 3.12 && \
-    ln -sf /root/.local/share/uv/tools/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 /usr/local/bin/python3.12 && \
-    /root/.local/share/uv/tools/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
+RUN /root/.local/bin/uv python install 3.12 && \
+    /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
     /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
-    /root/.qwenpaw/venv/bin/pip install qwenpaw && \
-    ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
+    /root/.qwenpaw/venv/bin/pip install qwenpaw${QWENPAW_VERSION:+==}${QWENPAW_VERSION:-}
 
+# 确保 qwenpaw 在 PATH 中
+RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
+
+ENV PATH="/root/.qwenpaw/venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
-# ============================================================
-# 初始化 qwenpaw 工作目录
-# ============================================================
-RUN mkdir -p /root/.qwenpaw/workspaces/default && \
-    mkdir -p /root/.qwenpaw/skill_pool && \
-    qwenpaw init --defaults --accept-security --force
-
-# ============================================================
-# 入口脚本：启动 qwenpaw 后执行原入口
-# ============================================================
-COPY entrypoint.sh /opt/entrypoint.sh
-RUN chmod +x /opt/entrypoint.sh && sed -i 's/\r$//' /opt/entrypoint.sh
-
-EXPOSE 8088
-ENTRYPOINT ["/opt/entrypoint.sh"]
+# 继承原有的 entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
