@@ -29,8 +29,14 @@ ENV PATH="/root/.local/bin:$PATH"
 # ============================================================
 RUN /root/.local/bin/uv python install 3.12 && \
     /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
-    /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
-    /root/.qwenpaw/venv/bin/pip install qwenpaw${QWENPAW_VERSION:+==}${QWENPAW_VERSION:-}
+    /root/.qwenpaw/venv/bin/pip install --upgrade pip
+
+# qwenpaw 最新版（不用 ==latest）
+RUN if [ "${QWENPAW_VERSION}" = "latest" ]; then \
+        /root/.qwenpaw/venv/bin/pip install qwenpaw; \
+    else \
+        /root/.qwenpaw/venv/bin/pip install "qwenpaw==${QWENPAW_VERSION}"; \
+    fi
 
 # 确保 qwenpaw 在 PATH 中
 RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
