@@ -56,7 +56,20 @@ RUN mkdir -p /opt/noVNC \
     && cd /opt/noVNC \
     && wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz | tar xz --strip-components=1 \
     && wget -qO- https://github.com/novnc/websockify/archive/refs/tags/v0.12.0.tar.gz | tar xz \
-    && mv websockify-0.12.0 /opt/noVNC/utils/websockify
+    && mv websockify-0.12.0 /opt/noVNC/utils/websockify \
+    && python3 -c "
+import re
+with open('/opt/noVNC/app/ui.js') as f: c=f.read()
+c=c.replace(
+    'document.getElementById(\"noVNC_clipboard_button\")\n            .addEventListener',
+    'var _cb=document.getElementById(\"noVNC_clipboard_button\");if(_cb)_cb.addEventListener'
+)
+c=c.replace(
+    'document.getElementById(\"noVNC_clipboard_text\")\n            .addEventListener',
+    'var _ct=document.getElementById(\"noVNC_clipboard_text\");if(_ct)_ct.addEventListener'
+)
+with open('/opt/noVNC/app/ui.js','w') as f: f.write(c)
+"
 
 # # ---------- 第六层（已禁用）：Chrome ----------
 # RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \

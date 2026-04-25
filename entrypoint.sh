@@ -81,16 +81,13 @@ netstat -tlnp 2>/dev/null | grep -E "5901|7860" || ss -tlnp | grep -E "5901|7860
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC Web 服务 (端口 7860)..."
-# vnc_lite.html 没有 clipboard bug，直接替代 vnc.html
-cp /opt/noVNC/vnc_lite.html /opt/noVNC/vnc.html
-echo "vnc_lite.html 已替代 vnc.html"
 websockify --web /opt/noVNC 7860 localhost:5901 &
 
 sleep 2
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
-echo "  noVNC: http://你的空间地址/vnc_lite.html"
+echo "  noVNC: http://你的空间地址/vnc.html"
 echo "========================================"
 
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
