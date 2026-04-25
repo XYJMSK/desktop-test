@@ -55,8 +55,7 @@ RUN mkdir -p /opt/noVNC \
     && cd /opt/noVNC \
     && wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz | tar xz --strip-components=1 \
     && wget -qO- https://github.com/novnc/websockify/archive/refs/tags/v0.12.0.tar.gz | tar xz \
-    && mv websockify-0.12.0 /opt/noVNC/utils/websockify \
-    && ln -sf /opt/noVNC/utils/websockify/websockify /usr/local/bin/websockify
+    && mv websockify-0.12.0 /opt/noVNC/utils/websockify
 
 # # ---------- 第六层（已禁用）：Chrome ----------
 # RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \

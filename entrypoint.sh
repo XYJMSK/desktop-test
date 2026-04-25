@@ -49,7 +49,7 @@ sleep 2
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC Web 服务 (端口 7860)..."
-/usr/local/bin/websockify --web /opt/noVNC 7860 localhost:5901 &
+websockify --web /opt/noVNC 7860 localhost:5901 &
 
 sleep 2
 
