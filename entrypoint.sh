@@ -14,7 +14,15 @@ VNC_DEPTH="${VNC_DEPTH:-24}"
 echo "root:${ROOT_PASSWORD}" | chpasswd
 
 # 用 tigervncpasswd 生成密码文件（两次输入相同值即可非交互）
-{ echo "vncpass"; echo "vncpass"; } | tigervncpasswd -f > /root/.vnc/passwd 2>/dev/null || true
+# 用 expect 模拟 tigervncpasswd 交互
+expect -c "
+spawn tigervncpasswd
+expect \"Password:\"
+send \"vncpass\r\"
+expect \"Verify:\"
+send \"vncpass\r\"
+expect eof
+" > /root/.vnc/passwd 2>/dev/null || true
 chmod 600 /root/.vnc/passwd
 
 # ---------- xstartup ----------
