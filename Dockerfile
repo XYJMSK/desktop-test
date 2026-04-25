@@ -42,16 +42,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gtk2-engines-murrine gtk2-engines-pixbuf \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------- 第四层：VNC 服务器 ----------
+# ---------- 第四层：VNC 服务器 + 生成密码文件 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tigervnc-standalone-server tigervnc-common tigervnc-tools \
-    && rm -rf /var/lib/apt/lists/*
-
-# 在构建时生成 VNC 密码文件（运行时直接复用）
-RUN mkdir -p /root/.vnc && \
-    printf 'set timeout 5\nspawn tigervncpasswd\nexpect "Password:"\nsend "vncpass\\r"\nexpect "Verify:"\nsend "vncpass\\r"\nexpect eof\n' > /tmp/vnc.exp && \
-    expect /tmp/vnc.exp && \
-    chmod 600 /root/.vnc/passwd
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /root/.vnc \
+    && printf 'vncpass\nvncpass\nn\n' | tigervncpasswd \
+    && chmod 600 /root/.vnc/passwd
 
 # ---------- 第五层：noVNC ----------
 RUN mkdir -p /opt/noVNC \
