@@ -10,45 +10,14 @@ echo "========================================"
 
 # ---------- 环境变量 ----------
 ROOT_PASSWORD="${ROOT_PASSWORD:-123456}"
-VNC_PASSWORD="${VNC_PASSWORD:-}"
 VNC_RESOLUTION="${VNC_RESOLUTION:-1920x1080}"
 VNC_DEPTH="${VNC_DEPTH:-24}"
 
 # 设置 root 密码
 echo "root:${ROOT_PASSWORD}" | chpasswd
 
-# ---------- 配置 VNC ----------
-mkdir -p /root/.vnc
-
-# 用 Python 生成 VNC passwd 文件（vncpasswd 命令在 Debian bookworm 中不存在）
-if [ -n "$VNC_PASSWORD" ]; then
-    echo "设置 VNC 密码..."
-    python3 -c "
-import os, crypt, hashlib, binascii
-
-def gen_vnc_passwd(password):
-    # VNC 协议用 DES 加密的 8 字节 challenge
-    salt = os.urandom(2)
-    # 简单的 DES crypt（只取前 8 字符）
-    p8 = password[:8].ljust(8, '\0').encode()
-    h = crypt.crypt(p8, salt)
-    # 取加密结果后 11 位（标准 VNC passwd 格式）
-    key_part = binascii.unhexlify(h.split('$')[-1][:16])
-    return binascii.hexlify(key_part).decode()
-
-pw = '''${VNC_PASSWORD}'''
-challenge = os.urandom(8)
-response = hashlib.des(pw[:8].ljust(8,'\0').encode()).encrypt(challenge)
-# 写 passwd 文件（无 salt 版 VNC 格式：8字节challenge + 8字节response）
-with open('/root/.vnc/passwd', 'wb') as f:
-    f.write(challenge + response)
-"
-else
-    echo "VNC 无密码模式，跳过 passwd 文件"
-fi
-chmod 600 /root/.vnc/passwd 2>/dev/null || true
-
 # ---------- xstartup ----------
+mkdir -p /root/.vnc
 cat > /root/.vnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
@@ -81,7 +50,7 @@ vncserver :1 \
     -depth "$VNC_DEPTH" \
     -localhost no \
     -alwaysshared \
-    -dpi 96
+    -dpi 96 \
 
 sleep 2
 
