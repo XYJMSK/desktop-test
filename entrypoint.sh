@@ -31,7 +31,7 @@ export DefaultIMModule=fcitx
 
 fcitx -d &
 
-exec startxfce4
+exec /usr/bin/startxfce4
 XSTARTUP
 
 chmod +x /root/.vnc/xstartup
@@ -42,10 +42,10 @@ vncserver :1 \
     -geometry "$VNC_RESOLUTION" \
     -depth "$VNC_DEPTH" \
     -localhost no \
-    -alwaysshared \
+    -xstartup "/bin/bash /root/.vnc/xstartup" \
     -dpi 96
 
-sleep 2
+sleep 3
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC Web 服务 (端口 7860)..."
