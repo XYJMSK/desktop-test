@@ -29,9 +29,9 @@ export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 export DefaultIMModule=fcitx
 
-fcitx -d &
+fcitx -d 2>/dev/null &
 
-exec /usr/bin/startxfce4
+dbus-run-session -- startxfce4
 XSTARTUP
 
 chmod +x /root/.vnc/xstartup
@@ -45,7 +45,7 @@ vncserver :1 \
     -xstartup "/bin/bash /root/.vnc/xstartup" \
     -dpi 96
 
-sleep 3
+sleep 5
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC Web 服务 (端口 7860)..."
