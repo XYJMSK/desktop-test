@@ -44,8 +44,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ---------- 第四层：VNC 服务器 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tigervnc-standalone-server tigervnc-common tigervnc-tools expect \
+    tigervnc-standalone-server tigervnc-common tigervnc-tools \
     && rm -rf /var/lib/apt/lists/*
+
+# 在构建时生成 VNC 密码文件（运行时直接复用）
+RUN mkdir -p /root/.vnc && \
+    expect -c "
+    log_user 0
+    spawn tigervncpasswd
+    expect \"Password:\"
+    send \"vncpass\r\"
+    expect \"Verify:\"
+    send \"vncpass\r\"
+    expect eof
+    " && chmod 600 /root/.vnc/passwd
 
 # ---------- 第五层：noVNC ----------
 RUN mkdir -p /opt/noVNC \

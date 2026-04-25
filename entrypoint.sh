@@ -13,24 +13,8 @@ VNC_DEPTH="${VNC_DEPTH:-24}"
 
 echo "root:${ROOT_PASSWORD}" | chpasswd
 
-# ---------- 生成 VNC passwd 文件 ----------
-mkdir -p /root/.vnc
-echo "生成 VNC 密码文件..."
-# 用 expect 模拟 tigervncpasswd 交互（有超时保护）
-expect -c "
-log_user 0
-set timeout 5
-spawn tigervncpasswd
-expect {
-    \"Password:\" { send \"vncpass\r\"; exp_continue }
-    \"Verify:\"   { send \"vncpass\r\"; exp_continue }
-    timeout     { exit 1 }
-    eof
-}
-" > /root/.vnc/passwd 2>/dev/null || true
-chmod 600 /root/.vnc/passwd
-
 # ---------- xstartup ----------
+mkdir -p /root/.vnc
 cat > /root/.vnc/xstartup << 'XSTARTUP'
 #!/bin/bash
 unset SESSION_MANAGER
