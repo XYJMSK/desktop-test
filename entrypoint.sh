@@ -1,20 +1,21 @@
 #!/bin/bash
 set -e
 
-# PATH 包含各种二进制路径
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
 
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
-# ---------- 环境变量 ----------
 ROOT_PASSWORD="${ROOT_PASSWORD:-123456}"
 VNC_RESOLUTION="${VNC_RESOLUTION:-1920x1080}"
 VNC_DEPTH="${VNC_DEPTH:-24}"
 
-# 设置 root 密码
 echo "root:${ROOT_PASSWORD}" | chpasswd
+
+# 用 tigervncpasswd 生成密码文件（两次输入相同值即可非交互）
+{ echo "vncpass"; echo "vncpass"; } | tigervncpasswd -f > /root/.vnc/passwd 2>/dev/null || true
+chmod 600 /root/.vnc/passwd
 
 # ---------- xstartup ----------
 mkdir -p /root/.vnc
@@ -65,13 +66,6 @@ echo "  Linux Desktop Container 已就绪！"
 echo "  noVNC 访问地址: http://你的空间地址/vnc.html"
 echo "========================================"
 
-# # ---------- 启动 qwenpaw（已禁用） ----------
-# echo "启动 qwenpaw (端口 8088)..."
-# cd /root
-# nohup /root/.qwenpaw/venv/bin/qwenpaw app --host 0.0.0.0 --port 8088 > /root/qwenpaw.log 2>&1 &
-# echo "qwenpaw PID: $!"
-
-# 自定义启动脚本
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
     chmod +x /root/startup/main.sh
     /root/startup/main.sh
