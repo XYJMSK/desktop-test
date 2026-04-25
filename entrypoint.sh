@@ -24,18 +24,14 @@ export LANG=zh_CN.UTF-8
 export LANGUAGE=zh_CN:zh
 export LC_ALL=zh_CN.UTF-8
 
-if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
-    eval $(dbus-launch --sh-syntax --exit-with-session)
-fi
-
 export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 export DefaultIMModule=fcitx
 
-fcitx -d 2>/dev/null &
+fcitx -d &
 
-startxfce4 &
+exec startxfce4
 XSTARTUP
 
 chmod +x /root/.vnc/xstartup
