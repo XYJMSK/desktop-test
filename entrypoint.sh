@@ -13,17 +13,42 @@ VNC_DEPTH="${VNC_DEPTH:-24}"
 
 echo "root:${ROOT_PASSWORD}" | chpasswd
 
-# 用 tigervncpasswd 生成密码文件（两次输入相同值即可非交互）
-# 用 expect 模拟 tigervncpasswd 交互
-expect -c "
-spawn tigervncpasswd
-expect \"Password:\"
-send \"vncpass\r\"
-expect \"Verify:\"
-send \"vncpass\r\"
-expect eof
-" > /root/.vnc/passwd 2>/dev/null || true
-chmod 600 /root/.vnc/passwd
+# ---------- 生成 VNC passwd 文件（Python + PTY） ----------
+echo "生成 VNC 密码文件..."
+python3 << 'PYEOF'
+import os, pty, sys, time, subprocess
+
+def run_vncpasswd():
+    pw = "vncpass"
+    # 用 PTY 运行 tigervncpasswd 来获取 TTY
+    master, slave = pty.openpty()
+    proc = subprocess.Popen(
+        ['tigervncpasswd'],
+        stdin=slave, stdout=slave, stderr=slave, close_fds=True
+    )
+    os.close(slave)
+
+    def send(s):
+        os.write(master, (s + '\r').encode())
+        time.sleep(0.3)
+
+    # 发送两次密码
+    send(pw)
+    send(pw)
+    time.sleep(0.5)
+    proc.wait()
+    os.close(master)
+
+    # tigervncpasswd 默认写到 ~/.vnc/passwd
+    passwd_file = os.path.expanduser('/root/.vnc/passwd')
+    if os.path.exists(passwd_file):
+        os.chmod(passwd_file, 0o600)
+        print(f"OK: {passwd_file} created")
+    else:
+        print("FAIL: passwd file not created", file=sys.stderr)
+
+run_vncpasswd()
+PYEOF
 
 # ---------- xstartup ----------
 mkdir -p /root/.vnc
