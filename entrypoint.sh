@@ -33,27 +33,6 @@ chmod +x /root/.vnc/xstartup
 
 echo "=== xstartup 创建完成 ==="
 
-# ---------- 修复 noVNC clipboard null bug ----------
-echo "=== 修复 noVNC clipboard bug ==="
-python3 -c "
-import os
-p='/opt/noVNC/app/ui.js'
-if os.path.exists(p):
-    with open(p) as f: c=f.read()
-    c=c.replace(
-        'document.getElementById(\"noVNC_clipboard_button\")\n            .addEventListener',
-        'var _cb=document.getElementById(\"noVNC_clipboard_button\");if(_cb)_cb.addEventListener'
-    )
-    c=c.replace(
-        'document.getElementById(\"noVNC_clipboard_text\")\n            .addEventListener',
-        'var _ct=document.getElementById(\"noVNC_clipboard_text\");if(_ct)_ct.addEventListener'
-    )
-    with open(p,'w') as f: f.write(c)
-    print('clipboard bug patched OK')
-else:
-    print('ui.js not found')
-"
-
 echo "=== noVNC 版本 ==="
 python3 -c "import json; print('noVNC:', json.load(open('/opt/noVNC/package.json'))['version'])"
 
