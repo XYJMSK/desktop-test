@@ -72,7 +72,7 @@ RUN wget -qO /tmp/vscode.deb "https://code.visualstudio.com/sha/download?build=s
 # ============================================================
 # qwenpaw 版本控制（默认 latest，可改成具体版本如 1.1.2）
 # ============================================================
-ENV QWENPAW_VERSION=latest
+ENV QWENPAW_VERSION=1.1.2
 
 # ---------- 安装 uv ----------
 RUN if [ ! -f /root/.local/bin/uv ]; then \
