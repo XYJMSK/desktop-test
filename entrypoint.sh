@@ -43,7 +43,7 @@ vncserver :1 \
     -depth "$VNC_DEPTH" \
     -localhost no \
     -xstartup /root/.vnc/xstartup \
-    -SecurityTypes None \
+    -SecurityTypes None --I-KNOW-THIS-IS-INSECURE \
     -dpi 96
 
 sleep 5
