@@ -1,5 +1,5 @@
 # ================================================================
-#  Linux Desktop Container - 适配魔搭创空间 / HuggingFace Spaces
+#  Linux Desktop Container - 适配魔搭创空间
 #  架构: 浏览器 → noVNC(7860) → websockify → TigerVNC(5901) → XFCE4
 # ================================================================
 FROM debian:bookworm
@@ -44,7 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ---------- 第四层：VNC 服务器 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tigervnc-standalone-server tigervnc-common expect \
+    tigervnc-standalone-server tigervnc-common \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第五层：noVNC ----------
@@ -55,46 +55,46 @@ RUN mkdir -p /opt/noVNC \
     && mv websockify-0.12.0 /opt/noVNC/utils/websockify \
     && ln -sf /opt/noVNC/utils/websockify/websockify /usr/local/bin/websockify
 
-# ---------- 第六层（可选）：Chrome ----------
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
-    && rm google-chrome-stable_current_amd64.deb \
-    && rm -rf /var/lib/apt/lists/*
+# # ---------- 第六层（已禁用）：Chrome ----------
+# RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+#     && apt-get update \
+#     && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
+#     && rm google-chrome-stable_current_amd64.deb \
+#     && rm -rf /var/lib/apt/lists/*
 
-# ---------- 第七层（可选）：VS Code ----------
-RUN wget -qO /tmp/vscode.deb "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends /tmp/vscode.deb \
-    && rm /tmp/vscode.deb \
-    && rm -rf /var/lib/apt/lists/*
+# # ---------- 第七层（已禁用）：VS Code ----------
+# RUN wget -qO /tmp/vscode.deb "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" \
+#     && apt-get update \
+#     && apt-get install -y --no-install-recommends /tmp/vscode.deb \
+#     && rm /tmp/vscode.deb \
+#     && rm -rf /var/lib/apt/lists/*
 
-# ============================================================
-# qwenpaw 版本控制（默认 latest，可改成具体版本如 1.1.2）
-# ============================================================
-ENV QWENPAW_VERSION=1.1.2
+# # ============================================================
+# # qwenpaw 版本控制（已禁用）
+# # ============================================================
+# ENV QWENPAW_VERSION=latest
 
-# ---------- 安装 uv ----------
-RUN if [ ! -f /root/.local/bin/uv ]; then \
-    apt-get update && apt-get install -y --no-install-recommends curl && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    rm -rf /var/lib/apt/lists/*; \
-    fi
+# # ---------- 安装 uv ----------
+# RUN if [ ! -f /root/.local/bin/uv ]; then \
+#     apt-get update && apt-get install -y --no-install-recommends curl && \
+#     curl -LsSf https://astral.sh/uv/install.sh | sh && \
+#     rm -rf /var/lib/apt/lists/*; \
+#     fi
 
-ENV PATH="/root/.local/bin:$PATH"
+# ENV PATH="/root/.local/bin:$PATH"
 
-# ---------- 安装 Python 3.12 + qwenpaw ----------
-RUN /root/.local/bin/uv python install 3.12 && \
-    /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
-    /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
-    if [ "${QWENPAW_VERSION}" = "latest" ]; then \
-        /root/.qwenpaw/venv/bin/pip install qwenpaw; \
-    else \
-        /root/.qwenpaw/venv/bin/pip install "qwenpaw==${QWENPAW_VERSION}"; \
-    fi
+# # ---------- 安装 Python 3.12 + qwenpaw ----------
+# RUN /root/.local/bin/uv python install 3.12 && \
+#     /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
+#     /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
+#     if [ "${QWENPAW_VERSION}" = "latest" ]; then \
+#         /root/.qwenpaw/venv/bin/pip install qwenpaw; \
+#     else \
+#         /root/.qwenpaw/venv/bin/pip install "qwenpaw==${QWENPAW_VERSION}"; \
+#     fi
 
-# 确保 qwenpaw 在 PATH 中
-RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
+# # 确保 qwenpaw 在 PATH 中
+# RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
 
 # ---------- 复制入口脚本 ----------
 COPY entrypoint.sh /entrypoint.sh

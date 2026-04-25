@@ -50,7 +50,7 @@ vncserver :1 \
     -depth "$VNC_DEPTH" \
     -localhost no \
     -alwaysshared \
-    -dpi 96 \
+    -dpi 96
 
 sleep 2
 
@@ -65,11 +65,11 @@ echo "  Linux Desktop Container 已就绪！"
 echo "  noVNC 访问地址: http://你的空间地址/vnc.html"
 echo "========================================"
 
-# ---------- 启动 qwenpaw ----------
-echo "启动 qwenpaw (端口 8088)..."
-cd /root
-nohup /root/.qwenpaw/venv/bin/qwenpaw app --host 0.0.0.0 --port 8088 > /root/qwenpaw.log 2>&1 &
-echo "qwenpaw PID: $!"
+# # ---------- 启动 qwenpaw（已禁用） ----------
+# echo "启动 qwenpaw (端口 8088)..."
+# cd /root
+# nohup /root/.qwenpaw/venv/bin/qwenpaw app --host 0.0.0.0 --port 8088 > /root/qwenpaw.log 2>&1 &
+# echo "qwenpaw PID: $!"
 
 # 自定义启动脚本
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
