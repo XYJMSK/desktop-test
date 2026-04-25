@@ -51,6 +51,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && chmod 600 /root/.vnc/passwd
 
 # ---------- 第五层：noVNC ----------
+ENV NO_VNC_VERSION=1.6.0
 RUN mkdir -p /opt/noVNC \
     && cd /opt/noVNC \
     && wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz | tar xz --strip-components=1 \
