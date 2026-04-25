@@ -58,6 +58,10 @@ RUN mkdir -p /opt/noVNC \
     && wget -qO- https://github.com/novnc/websockify/archive/refs/tags/v0.12.0.tar.gz | tar xz \
     && mv websockify-0.12.0 /opt/noVNC/utils/websockify
 
+# 修复 noVNC clipboard 空指针 bug（跨版本通用）
+COPY fix_clipboard.py /tmp/fix_clipboard.py
+RUN python3 /tmp/fix_clipboard.py
+
 # # ---------- 第六层（已禁用）：Chrome ----------
 # RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
 #     && apt-get update \
