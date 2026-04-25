@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# PATH includes /usr/bin where tigervnc vncpasswd lives
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/root/.local/bin:\/root/.qwenpaw/venv/bin:/root/.qwenpaw/bin:/root/.local/bin:/usr/local/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
