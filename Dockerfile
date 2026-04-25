@@ -53,7 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ---------- 第五层：noVNC ----------
 RUN mkdir -p /opt/noVNC \
     && cd /opt/noVNC \
-    && wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz | tar xz --strip-components=1 \
+    && wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz | tar xz --strip-components=1 \
     && wget -qO- https://github.com/novnc/websockify/archive/refs/tags/v0.12.0.tar.gz | tar xz \
     && mv websockify-0.12.0 /opt/noVNC/utils/websockify
 
