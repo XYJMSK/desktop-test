@@ -13,28 +13,13 @@ VNC_DEPTH="${VNC_DEPTH:-24}"
 
 echo "root:${ROOT_PASSWORD}" | chpasswd
 
-# ---------- xstartup ----------
+# ---------- 创建 xstartup ----------
 mkdir -p /root/.vnc
-cat > /root/.vnc/xstartup << 'XSTARTUP'
-#!/bin/bash
-unset SESSION_MANAGER
-unset DBUS_SESSION_BUS_ADDRESS
-
-export LANG=zh_CN.UTF-8
-export LANGUAGE=zh_CN:zh
-export LC_ALL=zh_CN.UTF-8
-
-export GTK_IM_MODULE=fcitx
-export QT_IM_MODULE=fcitx
-export XMODIFIERS=@im=fcitx
-export DefaultIMModule=fcitx
-
-fcitx -d 2>/dev/null &
-
-dbus-run-session -- startxfce4
-XSTARTUP
-
+printf '#!/bin/bash\nunset SESSION_MANAGER\nunset DBUS_SESSION_BUS_ADDRESS\nexport LANG=zh_CN.UTF-8\nexport LANGUAGE=zh_CN:zh\nexport LC_ALL=zh_CN.UTF-8\nexport GTK_IM_MODULE=fcitx\nexport QT_IM_MODULE=fcitx\nexport XMODIFIERS=@im=fcitx\nexport DefaultIMModule=fcitx\nfcitx -d 2>/dev/null\ndbus-run-session -- startxfce4\n' > /root/.vnc/xstartup
 chmod +x /root/.vnc/xstartup
+echo "xstartup created:"
+cat /root/.vnc/xstartup
+echo "---"
 
 # ---------- 启动 VNC ----------
 echo "启动 VNC 服务器 (${VNC_RESOLUTION} x ${VNC_DEPTH}bit)..."
@@ -42,7 +27,6 @@ vncserver :1 \
     -geometry "$VNC_RESOLUTION" \
     -depth "$VNC_DEPTH" \
     -localhost no \
-    -xstartup "/bin/bash /root/.vnc/xstartup" \
     -dpi 96
 
 sleep 5
