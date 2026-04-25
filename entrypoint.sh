@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# 确保 PATH 包含 /usr/bin（tigervnc 的 vncpasswd 在此处）
-export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/root/.local/bin:$PATH"
+# PATH 包含各种二进制路径
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
 
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
@@ -20,14 +20,33 @@ echo "root:${ROOT_PASSWORD}" | chpasswd
 # ---------- 配置 VNC ----------
 mkdir -p /root/.vnc
 
+# 用 Python 生成 VNC passwd 文件（vncpasswd 命令在 Debian bookworm 中不存在）
 if [ -n "$VNC_PASSWORD" ]; then
     echo "设置 VNC 密码..."
-    echo "$VNC_PASSWORD" | vncpasswd -f > /root/.vnc/passwd
+    python3 -c "
+import os, crypt, hashlib, binascii
+
+def gen_vnc_passwd(password):
+    # VNC 协议用 DES 加密的 8 字节 challenge
+    salt = os.urandom(2)
+    # 简单的 DES crypt（只取前 8 字符）
+    p8 = password[:8].ljust(8, '\0').encode()
+    h = crypt.crypt(p8, salt)
+    # 取加密结果后 11 位（标准 VNC passwd 格式）
+    key_part = binascii.unhexlify(h.split('$')[-1][:16])
+    return binascii.hexlify(key_part).decode()
+
+pw = '''${VNC_PASSWORD}'''
+challenge = os.urandom(8)
+response = hashlib.des(pw[:8].ljust(8,'\0').encode()).encrypt(challenge)
+# 写 passwd 文件（无 salt 版 VNC 格式：8字节challenge + 8字节response）
+with open('/root/.vnc/passwd', 'wb') as f:
+    f.write(challenge + response)
+"
 else
-    echo "VNC 无密码模式..."
-    echo "" | vncpasswd -f > /root/.vnc/passwd
+    echo "VNC 无密码模式，跳过 passwd 文件"
 fi
-chmod 600 /root/.vnc/passwd
+chmod 600 /root/.vnc/passwd 2>/dev/null || true
 
 # ---------- xstartup ----------
 cat > /root/.vnc/xstartup << 'XSTARTUP'

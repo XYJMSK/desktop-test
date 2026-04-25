@@ -44,7 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ---------- 第四层：VNC 服务器 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tigervnc-standalone-server tigervnc-common \
+    tigervnc-standalone-server tigervnc-common expect \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第五层：noVNC ----------
