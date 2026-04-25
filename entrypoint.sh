@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
@@ -49,7 +49,7 @@ sleep 2
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC Web 服务 (端口 7860)..."
-websockify --web /opt/noVNC 7860 localhost:5901 &
+/usr/local/bin/websockify --web /opt/noVNC 7860 localhost:5901 &
 
 sleep 2
 

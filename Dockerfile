@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fcitx fcitx-libpinyin fcitx-config-gtk \
     fcitx-frontend-gtk2 fcitx-frontend-gtk3 fcitx-ui-classic \
     scrot xclip htop neofetch jq \
-    python3 python3-pip python3-venv \
+    python3 python3-pip python3-venv websockify \
     net-tools iputils-ping procps \
     && rm -rf /var/lib/apt/lists/*
 
