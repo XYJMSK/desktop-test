@@ -31,15 +31,31 @@ printf '%s\n' \
   > /root/.vnc/xstartup
 chmod +x /root/.vnc/xstartup
 
-echo "=== xstartup 内容 ==="
-cat /root/.vnc/xstartup
-echo "=== 确认文件存在 ==="
-ls -la /root/.vnc/xstartup
+echo "=== xstartup 创建完成 ==="
 
-echo "=== 检查 noVNC 版本 ==="
-cat /opt/noVNC/package.json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print('noVNC version:', d.get('version','unknown'))"
-ls -la /opt/noVNC/vnc.html /opt/noVNC/app/ui.js 2>/dev/null
-md5sum /opt/noVNC/vnc.html /opt/noVNC/app/ui.js 2>/dev/null
+# ---------- 修复 noVNC clipboard null bug ----------
+echo "=== 修复 noVNC clipboard bug ==="
+python3 -c "
+import os
+p='/opt/noVNC/app/ui.js'
+if os.path.exists(p):
+    with open(p) as f: c=f.read()
+    c=c.replace(
+        'document.getElementById(\"noVNC_clipboard_button\")\n            .addEventListener',
+        'var _cb=document.getElementById(\"noVNC_clipboard_button\");if(_cb)_cb.addEventListener'
+    )
+    c=c.replace(
+        'document.getElementById(\"noVNC_clipboard_text\")\n            .addEventListener',
+        'var _ct=document.getElementById(\"noVNC_clipboard_text\");if(_ct)_ct.addEventListener'
+    )
+    with open(p,'w') as f: f.write(c)
+    print('clipboard bug patched OK')
+else:
+    print('ui.js not found')
+"
+
+echo "=== noVNC 版本 ==="
+python3 -c "import json; print('noVNC:', json.load(open('/opt/noVNC/package.json'))['version'])"
 
 # ---------- 启动 VNC ----------
 echo "启动 VNC 服务器 (${VNC_RESOLUTION} x ${VNC_DEPTH}bit)..."
@@ -54,11 +70,14 @@ vncserver :1 \
 sleep 5
 
 # ---------- 确认 VNC 状态 ----------
-echo "=== VNC 进程 ==="
-ps aux | grep -E "Xtigervnc|startxfce4" | grep -v grep || echo "(无相关进程)"
+echo "=== VNC/XFCE 进程 ==="
+ps aux | grep -E "Xtigervnc|startxfce4" | grep -v grep || echo "(无)"
 
 echo "=== VNC 日志 ==="
-cat /root/.vnc/*:1.log 2>/dev/null | tail -20 || echo "(无日志)"
+cat /root/.vnc/*:1.log 2>/dev/null | tail -15 || echo "(无)"
+
+echo "=== 端口监听 ==="
+netstat -tlnp 2>/dev/null | grep -E "5901|7860" || ss -tlnp | grep -E "5901|7860"
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC Web 服务 (端口 7860)..."
@@ -68,7 +87,7 @@ sleep 2
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
-echo "  noVNC 访问地址: http://你的空间地址/vnc.html"
+echo "  noVNC: http://你的空间地址/vnc.html"
 echo "========================================"
 
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
