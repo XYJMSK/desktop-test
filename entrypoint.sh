@@ -36,6 +36,11 @@ cat /root/.vnc/xstartup
 echo "=== 确认文件存在 ==="
 ls -la /root/.vnc/xstartup
 
+echo "=== 检查 noVNC 版本 ==="
+cat /opt/noVNC/package.json 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print('noVNC version:', d.get('version','unknown'))"
+ls -la /opt/noVNC/vnc.html /opt/noVNC/app/ui.js 2>/dev/null
+md5sum /opt/noVNC/vnc.html /opt/noVNC/app/ui.js 2>/dev/null
+
 # ---------- 启动 VNC ----------
 echo "启动 VNC 服务器 (${VNC_RESOLUTION} x ${VNC_DEPTH}bit)..."
 vncserver :1 \
