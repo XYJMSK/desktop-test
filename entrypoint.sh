@@ -15,11 +15,26 @@ echo "root:${ROOT_PASSWORD}" | chpasswd
 
 # ---------- 创建 xstartup ----------
 mkdir -p /root/.vnc
-printf '#!/bin/bash\nunset SESSION_MANAGER\nunset DBUS_SESSION_BUS_ADDRESS\nexport LANG=zh_CN.UTF-8\nexport LANGUAGE=zh_CN:zh\nexport LC_ALL=zh_CN.UTF-8\nexport GTK_IM_MODULE=fcitx\nexport QT_IM_MODULE=fcitx\nexport XMODIFIERS=@im=fcitx\nexport DefaultIMModule=fcitx\nfcitx -d 2>/dev/null\ndbus-run-session -- startxfce4\n' > /root/.vnc/xstartup
+printf '%s\n' \
+  '#!/bin/bash' \
+  'unset SESSION_MANAGER' \
+  'unset DBUS_SESSION_BUS_ADDRESS' \
+  'export LANG=zh_CN.UTF-8' \
+  'export LANGUAGE=zh_CN:zh' \
+  'export LC_ALL=zh_CN.UTF-8' \
+  'export GTK_IM_MODULE=fcitx' \
+  'export QT_IM_MODULE=fcitx' \
+  'export XMODIFIERS=@im=fcitx' \
+  'export DefaultIMModule=fcitx' \
+  'fcitx -d 2>/dev/null' \
+  'dbus-run-session -- /usr/bin/startxfce4' \
+  > /root/.vnc/xstartup
 chmod +x /root/.vnc/xstartup
-echo "xstartup created:"
+
+echo "=== xstartup 内容 ==="
 cat /root/.vnc/xstartup
-echo "---"
+echo "=== 确认文件存在 ==="
+ls -la /root/.vnc/xstartup
 
 # ---------- 启动 VNC ----------
 echo "启动 VNC 服务器 (${VNC_RESOLUTION} x ${VNC_DEPTH}bit)..."
@@ -27,9 +42,18 @@ vncserver :1 \
     -geometry "$VNC_RESOLUTION" \
     -depth "$VNC_DEPTH" \
     -localhost no \
+    -xstartup /root/.vnc/xstartup \
+    -SecurityTypes VncAuth \
     -dpi 96
 
 sleep 5
+
+# ---------- 确认 VNC 状态 ----------
+echo "=== VNC 进程 ==="
+ps aux | grep -E "Xtigervnc|startxfce4" | grep -v grep || echo "(无相关进程)"
+
+echo "=== VNC 日志 ==="
+cat /root/.vnc/*:1.log 2>/dev/null | tail -20 || echo "(无日志)"
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC Web 服务 (端口 7860)..."
