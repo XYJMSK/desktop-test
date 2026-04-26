@@ -1,44 +1,72 @@
 #!/bin/bash
 set -e
-# entrypoint.sh - Linux Desktop Container 启动脚本
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
-# ---------- 运行时修复 noVNC clipboard 空指针 bug ----------
-echo "修复 noVNC clipboard bug..."
+# ---------- 运行时诊断 + 修复 noVNC clipboard 空指针 bug ----------
+echo "=== 诊断 noVNC clipboard 状态 ==="
 python3 - << 'PYEOF'
 import os, re
+
 p = "/opt/noVNC/app/ui.js"
 if not os.path.exists(p):
-    print("WARN: ui.js not found")
-    exit(0)
+    print("ERROR: ui.js not found at", p)
+    exit(1)
+
 with open(p) as f: c = f.read()
+
+# Show version from package.json
+pkg = "/opt/noVNC/package.json"
+if os.path.exists(pkg):
+    import json
+    with open(pkg) as f: d = json.load(f)
+    print("noVNC version:", d.get("version", "unknown"))
+
+# Show the clipboard handler lines
+print("\n=== clipboard handler lines ===")
+lines = c.split('\n')
+for i, line in enumerate(lines):
+    if 'noVNC_clipboard_button' in line or 'noVNC_clipboard_text' in line:
+        print(f"  line {i+1}: {line.rstrip()}")
+
+# Patch: null-safe the clipboard addEventListener calls
 orig = c
-for old, new in [
+patches = [
+    # Standard multiline pattern
     ('document.getElementById("noVNC_clipboard_button")\n            .addEventListener',
      'var _cb=document.getElementById("noVNC_clipboard_button");if(_cb)_cb.addEventListener'),
     ('document.getElementById("noVNC_clipboard_text")\n            .addEventListener',
      'var _ct=document.getElementById("noVNC_clipboard_text");if(_ct)_ct.addEventListener'),
+    # Single-quote variants
     ("document.getElementById('noVNC_clipboard_button')\n            .addEventListener",
      "var _cb=document.getElementById('noVNC_clipboard_button');if(_cb)_cb.addEventListener"),
     ("document.getElementById('noVNC_clipboard_text')\n            .addEventListener",
      "var _ct=document.getElementById('noVNC_clipboard_text');if(_ct)_ct.addEventListener"),
-]:
+    # Try to find any remaining chained getElementById + addEventListener
+]
+
+done = 0
+for old, new in patches:
     if old in c:
         c = c.replace(old, new)
-        print(f"patched: {old[:40]}...")
-if c != orig:
-    with open(p, 'w') as f: f.write(c)
-    print("clipboard bug fixed OK")
-else:
-    print("no changes needed")
-PYEOF
+        done += 1
+        print(f"PATCHED: {old[:50]}")
 
-echo "=== noVNC 版本 ==="
-python3 -c "import json; print('noVNC:', json.load(open('/opt/noVNC/package.json'))['version'])"
+if done > 0:
+    with open(p, 'w') as f: f.write(c)
+    print(f"\nclipboard patch applied ({done} changes)")
+else:
+    print("\nWARNING: no clipboard patterns matched!")
+    # Find addClipboardHandlers function and show it
+    for i, line in enumerate(lines):
+        if 'addClipboardHandlers' in line:
+            print(f"\n=== addClipboardHandlers context (lines {i+1}-{i+6}) ===")
+            for j in range(max(0,i), min(len(lines), i+6)):
+                print(f"  {j+1}: {lines[j]}")
+PYEOF
 
 # ---------- 创建 xstartup ----------
 mkdir -p /root/.vnc
