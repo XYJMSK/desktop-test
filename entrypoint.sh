@@ -46,8 +46,14 @@ if os.path.exists(vnc_html):
         f"import UI from './app/ui.{ts}.js'",
         h
     )
+    # Force auto-connect: inject connect settings into defaults before UI.start()
+    h_new = re.sub(
+        r"(defaults\['view_only'\] = true;)",
+        r"\1\n        defaults['host'] = 'localhost';\n        defaults['port'] = '7860';\n        defaults['connect'] = true;",
+        h_new
+    )
     with open(vnc_html, 'w') as f: f.write(h_new)
-    print(f"Updated vnc.html import to ui.{ts}.js")
+    print(f"Updated vnc.html import to ui.{ts}.js + auto-connect (localhost:6080)")
 else:
     print("vnc.html not found")
 PYEOF
@@ -96,7 +102,7 @@ sleep 2
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
-echo "  noVNC: http://你的空间地址/vnc.html"
+echo "  noVNC: http://你的空间地址/vnc.html?connect=true"
 echo "========================================"
 
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
