@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+exec > /tmp/entrypoint.log 2>&1
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
 echo "========================================"
@@ -51,6 +52,18 @@ with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
 print("Created index.html (vnc.html + patched ui.js + auto-connect)")
 PYEOF
 
+# ---------- 诊断：关键路径检查 ----------
+echo "=== 诊断信息 ==="
+echo "qwenpaw: $(command -v qwenpaw 2>/dev/null || echo '未找到')"
+echo "qwenpaw venv pip: $(ls /root/.qwenpaw/venv/bin/pip 2>/dev/null || echo '未找到')"
+echo "qwenpaw site-packages: $(ls /root/.qwenpaw/venv/lib/python*/site-packages/qwenpaw* 2>/dev/null | head -1 || echo '未找到')"
+echo "google-chrome: $(command -v google-chrome 2>/dev/null || echo '未找到')"
+echo "websockify: $(command -v websockify 2>/dev/null || echo '未找到')"
+echo "Xvfb: $(command -v Xvfb 2>/dev/null || echo '未找到')"
+echo "uv: $(command -v uv 2>/dev/null || echo '未找到')"
+echo "noVNC index.html: $(ls /opt/noVNC/index.html 2>/dev/null || echo '未找到')"
+python3 --version
+
 # ---------- 创建 xstartup ----------
 mkdir -p /root/.vnc
 printf '%s\n' \
@@ -85,44 +98,50 @@ sleep 5
 echo "=== VNC/XFCE 进程 ==="
 ps aux | grep -E "Xtigervnc|startxfce4" | grep -v grep || echo "(无)"
 echo "=== 端口监听 ==="
-ss -tlnp | grep -E "5901|7860|8088" || netstat -tlnp | grep -E "5901|7860|8088"
+ss -tlnp 2>/dev/null | grep -E "5901|7860|8088" || netstat -tlnp 2>/dev/null | grep -E "5901|7860|8088"
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC (7860)..."
 websockify --web /opt/noVNC 7860 localhost:5901 &
-
 sleep 2
 
-# ---------- 启动 Chrome ----------
-if command -v google-chrome &>/dev/null; then
-    echo "启动 Chrome (Display :1)..."
-    google-chrome \
-        --headless \
+# ---------- 启动 Chrome (在 Xvfb 虚拟显示上) ----------
+if command -v google-chrome &>/dev/null && command -v Xvfb &>/dev/null; then
+    echo "启动 Xvfb + Chrome..."
+    Xvfb :99 -screen 0 1920x1080x24 &
+    sleep 2
+    DISPLAY=:99 google-chrome \
         --no-sandbox \
         --disable-gpu \
-        --disable-software-rasterizer \
         --disable-dev-shm-usage \
         --remote-debugging-port=9222 \
-        --user-data-dir=/root/.chrome-debug &
+        --user-data-dir=/root/.chrome-debug \
+        --kiosk "http://localhost:7860" \
+        > /tmp/chrome.log 2>&1 &
     echo "Chrome PID: $!"
+    sleep 2
 else
-    echo "Chrome 未安装，跳过"
+    echo "Chrome/Xvfb 未安装，跳过"
 fi
 
 # ---------- 启动 qwenpaw ----------
-if command -v qwenpaw &>/dev/null; then
+if [ -x /root/.qwenpaw/venv/bin/qwenpaw ]; then
     echo "启动 qwenpaw (8088)..."
+    # 检查 venv 内 qwenpaw
+    /root/.qwenpaw/venv/bin/pip list 2>/dev/null | grep -i qwenpaw || echo "WARNING: qwenpaw not in pip list"
     cd /root
     nohup /root/.qwenpaw/venv/bin/qwenpaw app --host 0.0.0.0 --port 8088 > /root/qwenpaw.log 2>&1 &
     echo "qwenpaw PID: $!"
+    sleep 3
+    cat /root/qwenpaw.log 2>/dev/null || echo "(无日志)"
 else
     echo "qwenpaw 未安装，跳过"
 fi
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
-echo "  noVNC:  7860"
-echo "  qwenpaw: 8088"
+echo "  noVNC:   http://localhost:7860"
+echo "  qwenpaw: http://localhost:8088"
 echo "========================================"
 
 # ---------- 启动自定义脚本 ----------
