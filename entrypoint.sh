@@ -46,14 +46,14 @@ if os.path.exists(vnc_html):
         f"import UI from './app/ui.{ts}.js'",
         h
     )
-    # Force auto-connect: inject connect settings into defaults before UI.start()
+    # Force auto-connect: inject connect settings into defaults after defaults.json load
     h_new = re.sub(
-        r"(defaults\['view_only'\] = true;)",
+        r"(defaults = await response\.json\(\);)",
         r"\1\n        defaults['host'] = 'localhost';\n        defaults['port'] = '7860';\n        defaults['connect'] = true;",
         h_new
     )
     with open(vnc_html, 'w') as f: f.write(h_new)
-    print(f"Updated vnc.html import to ui.{ts}.js + auto-connect (localhost:6080)")
+    print(f"Updated vnc.html import to ui.{ts}.js + auto-connect (localhost:7860)")
 else:
     print("vnc.html not found")
 PYEOF
