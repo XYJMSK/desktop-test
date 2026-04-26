@@ -6,10 +6,10 @@ echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
-# ---------- 修复 noVNC clipboard bug + 改名绕过浏览器缓存 ----------
+# ---------- 修复 noVNC clipboard bug ----------
 echo "=== 修复 noVNC clipboard bug ==="
 python3 - << 'PYEOF'
-import os, re, json, time, shutil
+import os, re, time
 
 src = "/opt/noVNC/app/ui.js"
 if not os.path.exists(src):
@@ -18,7 +18,6 @@ if not os.path.exists(src):
 
 with open(src) as f: c = f.read()
 
-# Patch clipboard null pointers
 patches = [
     ('document.getElementById("noVNC_clipboard_button")\n            .addEventListener',
      'var _cb=document.getElementById("noVNC_clipboard_button");if(_cb)_cb.addEventListener'),
@@ -31,29 +30,28 @@ for old, new in patches:
         c = c.replace(old, new)
         done += 1
 
-# Rename to bust browser cache
 ts = str(int(time.time()))
 patched = f"/opt/noVNC/app/ui.{ts}.js"
 with open(patched, 'w') as f: f.write(c)
-print(f"Patched ui.js saved to ui.{ts}.js ({done} patches)")
+print(f"Patched ui.js -> ui.{ts}.js ({done} patches)")
 
-# Update vnc.html import to point to renamed file
+# ---------- 构建 index.html：vnc.html + 改名ui.js + 写死连接参数 ----------
 vnc_html = "/opt/noVNC/vnc.html"
-if os.path.exists(vnc_html):
-    with open(vnc_html) as f: h = f.read()
-    h_new = re.sub(
-        r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
-        f"import UI from './app/ui.{ts}.js'",
-        h
-    )
-    with open(vnc_html, 'w') as f: f.write(h_new)
-    print(f"Updated vnc.html import to ui.{ts}.js")
-else:
-    print("vnc.html not found")
-
-# Use vnc_lite.html as index (auto-connect via URL params ?host=...&port=...)
-shutil.copy("/opt/noVNC/vnc_lite.html", "/opt/noVNC/index.html")
-print("Copied vnc_lite.html as index.html")
+with open(vnc_html) as f: h = f.read()
+# 更新 import 指向 renamed ui.js
+h = re.sub(
+    r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
+    f"import UI from './app/ui.{ts}.js'",
+    h
+)
+# 写死连接参数：在 defaults.json 加载之后、UI.start() 之前注入
+h = re.sub(
+    r"(defaults = await response\.json\(\);)",
+    r"\1\n        defaults['host'] = 'localhost';\n        defaults['port'] = '7860';\n        defaults['connect'] = true;",
+    h
+)
+with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
+print(f"Created index.html (vnc.html + patched ui + auto-connect)")
 PYEOF
 
 # ---------- 创建 xstartup ----------
@@ -100,7 +98,6 @@ sleep 2
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
-echo "  访问地址: http://你的空间地址/?host=localhost&port=7860"
 echo "========================================"
 
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
