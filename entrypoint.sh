@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-# PATH includes /usr/bin where tigervnc vncpasswd lives
-export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/root/.local/bin:\/root/.qwenpaw/venv/bin:/root/.qwenpaw/bin:/root/.local/bin:/usr/local/node/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/root/.local/bin:$PATH"
 
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
@@ -14,7 +13,6 @@ VNC_PASSWORD="${VNC_PASSWORD:-}"
 VNC_RESOLUTION="${VNC_RESOLUTION:-1920x1080}"
 VNC_DEPTH="${VNC_DEPTH:-24}"
 
-# 设置 root 密码
 echo "root:${ROOT_PASSWORD}" | chpasswd
 
 # ---------- 配置 VNC ----------
@@ -28,6 +26,54 @@ else
     echo "" | vncpasswd -f > /root/.vnc/passwd
 fi
 chmod 600 /root/.vnc/passwd
+
+# ---------- 修复 noVNC clipboard bug + 构建 auto-connect index ----------
+echo "=== 修复 noVNC clipboard bug + auto-connect ==="
+python3 - << 'PYEOF'
+import os, re, time, shutil
+
+src = "/opt/noVNC/app/ui.js"
+if not os.path.exists(src):
+    print("ERROR: ui.js not found at", src)
+    exit(1)
+
+with open(src) as f: c = f.read()
+
+# Patch clipboard null pointers
+patches = [
+    ('document.getElementById("noVNC_clipboard_button")\n            .addEventListener',
+     'var _cb=document.getElementById("noVNC_clipboard_button");if(_cb)_cb.addEventListener'),
+    ('document.getElementById("noVNC_clipboard_text")\n            .addEventListener',
+     'var _ct=document.getElementById("noVNC_clipboard_text");if(_ct)_ct.addEventListener'),
+]
+done = 0
+for old, new in patches:
+    if old in c:
+        c = c.replace(old, new)
+        done += 1
+
+# Rename to bust browser cache
+ts = str(int(time.time()))
+patched = f"/opt/noVNC/app/ui.{ts}.js"
+with open(patched, 'w') as f: f.write(c)
+print(f"Patched ui.js -> ui.{ts}.js ({done} patches)")
+
+# Build index.html: vnc.html + renamed ui.js + hardcoded auto-connect params
+vnc_html = "/opt/noVNC/vnc.html"
+with open(vnc_html) as f: h = f.read()
+h = re.sub(
+    r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
+    f"import UI from './app/ui.{ts}.js'",
+    h
+)
+h = re.sub(
+    r"(defaults = await response\.json\(\);)",
+    r"\1\n        defaults['host'] = 'localhost';\n        defaults['port'] = '7860';\n        defaults['connect'] = true;",
+    h
+)
+with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
+print("Created index.html (vnc.html + patched ui.js + auto-connect)")
+PYEOF
 
 # ---------- xstartup ----------
 cat > /root/.vnc/xstartup << 'XSTARTUP'
@@ -74,7 +120,6 @@ sleep 2
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
-echo "  noVNC 访问地址: http://你的空间地址/vnc.html"
 echo "========================================"
 
 # ---------- 启动 qwenpaw ----------
