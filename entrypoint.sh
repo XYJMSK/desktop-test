@@ -9,7 +9,7 @@ echo "========================================"
 # ---------- 修复 noVNC clipboard bug + 改名绕过浏览器缓存 ----------
 echo "=== 修复 noVNC clipboard bug ==="
 python3 - << 'PYEOF'
-import os, re, json, time
+import os, re, json, time, shutil
 
 src = "/opt/noVNC/app/ui.js"
 if not os.path.exists(src):
@@ -46,16 +46,14 @@ if os.path.exists(vnc_html):
         f"import UI from './app/ui.{ts}.js'",
         h
     )
-    # Force auto-connect: inject connect settings into defaults after defaults.json load
-    h_new = re.sub(
-        r"(defaults = await response\.json\(\);)",
-        r"\1\n        defaults['host'] = 'localhost';\n        defaults['port'] = '7860';\n        defaults['connect'] = true;",
-        h_new
-    )
     with open(vnc_html, 'w') as f: f.write(h_new)
-    print(f"Updated vnc.html import to ui.{ts}.js + auto-connect (localhost:7860)")
+    print(f"Updated vnc.html import to ui.{ts}.js")
 else:
     print("vnc.html not found")
+
+# Use vnc_lite.html as index (auto-connect via URL params ?host=...&port=...)
+shutil.copy("/opt/noVNC/vnc_lite.html", "/opt/noVNC/index.html")
+print("Copied vnc_lite.html as index.html")
 PYEOF
 
 # ---------- 创建 xstartup ----------
@@ -102,7 +100,7 @@ sleep 2
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
-echo "  noVNC: http://你的空间地址/vnc.html?connect=true"
+echo "  访问地址: http://你的空间地址/?host=localhost&port=7860"
 echo "========================================"
 
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
