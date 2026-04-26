@@ -4,7 +4,6 @@
 # ================================================================
 FROM debian:bookworm
 
-# 避免交互式安装提示
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ---------- 第一层：基础系统工具 + 中文支持 ----------
@@ -24,7 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     net-tools iputils-ping procps \
     && rm -rf /var/lib/apt/lists/*
 
-# 设置中文 locale
 ENV LANG=zh_CN.UTF-8
 ENV LANGUAGE=zh_CN:zh
 ENV LC_ALL=zh_CN.UTF-8
@@ -58,50 +56,45 @@ RUN mkdir -p /opt/noVNC \
     && wget -qO- https://github.com/novnc/websockify/archive/refs/tags/v0.12.0.tar.gz | tar xz \
     && mv websockify-0.12.0 /opt/noVNC/utils/websockify
 
-# 修复 noVNC clipboard 空指针 bug（跨版本通用）
-COPY fix_clipboard.py /tmp/fix_clipboard.py
-RUN python3 /tmp/fix_clipboard.py
+# ---------- 第六层：Chrome ----------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget gnupg \
+    && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
+    && rm google-chrome-stable_current_amd64.deb \
+    && rm -rf /var/lib/apt/lists/*
 
-# # ---------- 第六层（已禁用）：Chrome ----------
-# RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-#     && apt-get update \
-#     && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
-#     && rm google-chrome-stable_current_amd64.deb \
-#     && rm -rf /var/lib/apt/lists/*
+# ---------- 第七层：VS Code ----------
+RUN wget -qO /tmp/vscode.deb "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/vscode.deb \
+    && rm /tmp/vscode.deb \
+    && rm -rf /var/lib/apt/lists/*
 
-# # ---------- 第七层（已禁用）：VS Code ----------
-# RUN wget -qO /tmp/vscode.deb "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" \
-#     && apt-get update \
-#     && apt-get install -y --no-install-recommends /tmp/vscode.deb \
-#     && rm /tmp/vscode.deb \
-#     && rm -rf /var/lib/apt/lists/*
+# ============================================================
+# qwenpaw 版本控制
+# ============================================================
+ENV QWENPAW_VERSION=latest
 
-# # ============================================================
-# # qwenpaw 版本控制（已禁用）
-# # ============================================================
-# ENV QWENPAW_VERSION=latest
+# ---------- 安装 uv ----------
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    rm -rf /var/lib/apt/lists/*
 
-# # ---------- 安装 uv ----------
-# RUN if [ ! -f /root/.local/bin/uv ]; then \
-#     apt-get update && apt-get install -y --no-install-recommends curl && \
-#     curl -LsSf https://astral.sh/uv/install.sh | sh && \
-#     rm -rf /var/lib/apt/lists/*; \
-#     fi
+ENV PATH="/root/.local/bin:$PATH"
 
-# ENV PATH="/root/.local/bin:$PATH"
+# ---------- 安装 Python 3.12 + qwenpaw ----------
+RUN /root/.local/bin/uv python install 3.12 && \
+    /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
+    /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
+    if [ "${QWENPAW_VERSION}" = "latest" ]; then \
+        /root/.qwenpaw/venv/bin/pip install qwenpaw; \
+    else \
+        /root/.qwenpaw/venv/bin/pip install "qwenpaw==${QWENPAW_VERSION}"; \
+    fi
 
-# # ---------- 安装 Python 3.12 + qwenpaw ----------
-# RUN /root/.local/bin/uv python install 3.12 && \
-#     /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
-#     /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
-#     if [ "${QWENPAW_VERSION}" = "latest" ]; then \
-#         /root/.qwenpaw/venv/bin/pip install qwenpaw; \
-#     else \
-#         /root/.qwenpaw/venv/bin/pip install "qwenpaw==${QWENPAW_VERSION}"; \
-#     fi
-
-# # 确保 qwenpaw 在 PATH 中
-# RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
+RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
 
 # ---------- 复制入口脚本 ----------
 COPY entrypoint.sh /entrypoint.sh

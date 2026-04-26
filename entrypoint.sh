@@ -6,14 +6,14 @@ echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
-# ---------- 修复 noVNC clipboard bug ----------
-echo "=== 修复 noVNC clipboard bug ==="
+# ---------- 修复 noVNC clipboard bug + 构建 auto-connect index ----------
+echo "=== 修复 noVNC clipboard bug + auto-connect ==="
 python3 - << 'PYEOF'
-import os, re, time
+import os, re, time, shutil
 
 src = "/opt/noVNC/app/ui.js"
 if not os.path.exists(src):
-    print("ERROR: ui.js not found")
+    print("ERROR: ui.js not found at", src)
     exit(1)
 
 with open(src) as f: c = f.read()
@@ -35,23 +35,20 @@ patched = f"/opt/noVNC/app/ui.{ts}.js"
 with open(patched, 'w') as f: f.write(c)
 print(f"Patched ui.js -> ui.{ts}.js ({done} patches)")
 
-# ---------- 构建 index.html：vnc.html + 改名ui.js + 写死连接参数 ----------
 vnc_html = "/opt/noVNC/vnc.html"
 with open(vnc_html) as f: h = f.read()
-# 更新 import 指向 renamed ui.js
 h = re.sub(
     r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
     f"import UI from './app/ui.{ts}.js'",
     h
 )
-# 写死连接参数：在 defaults.json 加载之后、UI.start() 之前注入
 h = re.sub(
     r"(defaults = await response\.json\(\);)",
     r"\1\n        defaults['host'] = 'localhost';\n        defaults['port'] = '7860';\n        defaults['connect'] = true;",
     h
 )
 with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
-print(f"Created index.html (vnc.html + patched ui + auto-connect)")
+print("Created index.html (vnc.html + patched ui.js + auto-connect)")
 PYEOF
 
 # ---------- 创建 xstartup ----------
@@ -88,18 +85,47 @@ sleep 5
 echo "=== VNC/XFCE 进程 ==="
 ps aux | grep -E "Xtigervnc|startxfce4" | grep -v grep || echo "(无)"
 echo "=== 端口监听 ==="
-ss -tlnp | grep -E "5901|7860" || netstat -tlnp | grep -E "5901|7860"
+ss -tlnp | grep -E "5901|7860|8088" || netstat -tlnp | grep -E "5901|7860|8088"
 
 # ---------- 启动 noVNC ----------
-echo "启动 noVNC..."
+echo "启动 noVNC (7860)..."
 websockify --web /opt/noVNC 7860 localhost:5901 &
 
 sleep 2
 
+# ---------- 启动 Chrome ----------
+if command -v google-chrome &>/dev/null; then
+    echo "启动 Chrome (Display :1)..."
+    google-chrome \
+        --headless \
+        --no-sandbox \
+        --disable-gpu \
+        --disable-software-rasterizer \
+        --disable-dev-shm-usage \
+        --remote-debugging-port=9222 \
+        --user-data-dir=/root/.chrome-debug &
+    echo "Chrome PID: $!"
+else
+    echo "Chrome 未安装，跳过"
+fi
+
+# ---------- 启动 qwenpaw ----------
+if command -v qwenpaw &>/dev/null; then
+    echo "启动 qwenpaw (8088)..."
+    cd /root
+    nohup /root/.qwenpaw/venv/bin/qwenpaw app --host 0.0.0.0 --port 8088 > /root/qwenpaw.log 2>&1 &
+    echo "qwenpaw PID: $!"
+else
+    echo "qwenpaw 未安装，跳过"
+fi
+
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
+echo "  noVNC:  7860"
+echo "  qwenpaw: 8088"
 echo "========================================"
 
+# ---------- 启动自定义脚本 ----------
 if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
     chmod +x /root/startup/main.sh
     /root/startup/main.sh
