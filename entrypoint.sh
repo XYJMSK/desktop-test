@@ -6,39 +6,50 @@ echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
-# ---------- 诊断 noVNC clipboard ----------
-echo "=== 诊断 clipboard ==="
+# ---------- 修复 noVNC clipboard bug + 改名绕过浏览器缓存 ----------
+echo "=== 修复 noVNC clipboard bug ==="
 python3 - << 'PYEOF'
-import os, re
+import os, re, json, time
 
-p = "/opt/noVNC/app/ui.js"
-if not os.path.exists(p):
-    print("ERROR: ui.js not found at", p)
+src = "/opt/noVNC/app/ui.js"
+if not os.path.exists(src):
+    print("ERROR: ui.js not found")
     exit(1)
 
-with open(p) as f: c = f.read()
+with open(src) as f: c = f.read()
 
-pkg = "/opt/noVNC/package.json"
-if os.path.exists(pkg):
-    import json
-    with open(pkg) as f: d = json.load(f)
-    print("noVNC version:", d.get("version", "unknown"))
+# Patch clipboard null pointers
+patches = [
+    ('document.getElementById("noVNC_clipboard_button")\n            .addEventListener',
+     'var _cb=document.getElementById("noVNC_clipboard_button");if(_cb)_cb.addEventListener'),
+    ('document.getElementById("noVNC_clipboard_text")\n            .addEventListener',
+     'var _ct=document.getElementById("noVNC_clipboard_text");if(_ct)_ct.addEventListener'),
+]
+done = 0
+for old, new in patches:
+    if old in c:
+        c = c.replace(old, new)
+        done += 1
 
-lines = c.split('\n')
-found = False
-for i, line in enumerate(lines):
-    if 'addClipboardHandlers' in line and 'function' in lines[max(0,i-1)]:
-        print(f"\n=== addClipboardHandlers (lines {i+1}-{min(len(lines), i+20)}) ===")
-        for j in range(max(0, i), min(len(lines), i+20)):
-            print(f"  {j+1}: {lines[j]}")
-        found = True
-        break
+# Rename to bust browser cache
+ts = str(int(time.time()))
+patched = f"/opt/noVNC/app/ui.{ts}.js"
+with open(patched, 'w') as f: f.write(c)
+print(f"Patched ui.js saved to ui.{ts}.js ({done} patches)")
 
-if not found:
-    print("\naddClipboardHandlers function not found. All clipboard refs:")
-    for i, line in enumerate(lines):
-        if 'clipboard' in line.lower():
-            print(f"  {i+1}: {line.rstrip()}")
+# Update vnc.html import to point to renamed file
+vnc_html = "/opt/noVNC/vnc.html"
+if os.path.exists(vnc_html):
+    with open(vnc_html) as f: h = f.read()
+    h_new = re.sub(
+        r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
+        f"import UI from './app/ui.{ts}.js'",
+        h
+    )
+    with open(vnc_html, 'w') as f: f.write(h_new)
+    print(f"Updated vnc.html import to ui.{ts}.js")
+else:
+    print("vnc.html not found")
 PYEOF
 
 # ---------- 创建 xstartup ----------
@@ -74,8 +85,6 @@ sleep 5
 
 echo "=== VNC/XFCE 进程 ==="
 ps aux | grep -E "Xtigervnc|startxfce4" | grep -v grep || echo "(无)"
-echo "=== VNC 日志 ==="
-cat /root/.vnc/*:1.log 2>/dev/null | tail -10 || echo "(无)"
 echo "=== 端口监听 ==="
 ss -tlnp | grep -E "5901|7860" || netstat -tlnp | grep -E "5901|7860"
 
