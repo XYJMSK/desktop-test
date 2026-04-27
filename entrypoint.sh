@@ -115,24 +115,22 @@ echo "启动 noVNC (7860)..."
 websockify --web /opt/noVNC 7860 localhost:5901 &
 sleep 2
 
-# ---------- 启动 Chrome (在 Xvfb 虚拟显示上) ----------
-if command -v google-chrome &>/dev/null && command -v Xvfb &>/dev/null; then
-    echo "启动 Xvfb + Chrome..."
-    Xvfb :99 -screen 0 1920x1080x24 &
-    sleep 2
-    DISPLAY=:99 google-chrome \
-        --no-sandbox \
-        --disable-gpu \
-        --disable-dev-shm-usage \
-        --remote-debugging-port=9222 \
-        --user-data-dir=/root/.chrome-debug \
-        --new-window "http://localhost:7860" \
-        > /tmp/chrome.log 2>&1 &
-    echo "Chrome PID: $!"
-    sleep 2
-else
-    echo "Chrome/Xvfb 未安装，跳过"
-fi
+# ---------- 创建 Chrome .desktop 文件（让用户在桌面里手动点开） ----------
+mkdir -p /root/.local/share/applications
+cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Google Chrome
+Comment=Access the Internet
+Exec=/usr/bin/google-chrome --no-sandbox %U
+Icon=/usr/share/icons/hicolor/48x48/apps/google-chrome.png
+Categories=Network;WebBrowser;
+Terminal=false
+DESKTOP_EOF
+cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
+update-desktop-database /usr/share/applications/ 2>/dev/null || true
+echo "Chrome .desktop 文件已创建，桌面里点击图标即可打开" 
 
 # ---------- 启动 qwenpaw ----------
 if [ -x /root/.qwenpaw/venv/bin/qwenpaw ]; then
