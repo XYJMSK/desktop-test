@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fcitx fcitx-libpinyin fcitx-config-gtk \
     fcitx-frontend-gtk2 fcitx-frontend-gtk3 fcitx-ui-classic \
     scrot xclip htop neofetch jq \
-    python3 python3-pip python3-venv websockify \
+    python3 python3-pip python3-venv websockify rsync inotify-tools \
     net-tools iputils-ping procps \
     && rm -rf /var/lib/apt/lists/*
 
@@ -97,6 +97,7 @@ RUN /root/.local/bin/uv python install 3.12 && \
 RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
 
 # ---------- 复制入口脚本 ----------
+COPY sync.sh /root/sync.sh
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

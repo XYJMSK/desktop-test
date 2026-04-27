@@ -7,7 +7,7 @@ echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
-# ---------- 全局：设置默认浏览器（在桌面启动前就设好） ----------
+# ---------- 全局：设置默认浏览器 ----------
 mkdir -p /root/.local/share/applications
 cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'
 [Desktop Entry]
@@ -22,7 +22,6 @@ Terminal=false
 DESKTOP_EOF
 cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
 sed -i 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-default-browser-check|' /usr/share/applications/com.google.Chrome.desktop 2>/dev/null || true
-
 xdg-mime default google-chrome.desktop x-scheme-handler/http
 xdg-mime default google-chrome.desktop x-scheme-handler/https
 xdg-mime default google-chrome.desktop text/html
@@ -60,26 +59,29 @@ print(f"Patched ui.js -> ui.{ts}.js ({done} patches)")
 
 vnc_html = "/opt/noVNC/vnc.html"
 with open(vnc_html) as f: h = f.read()
-
-# Update import to renamed ui.js
 h = re.sub(
     r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
     f"import UI from './app/ui.{ts}.js'",
     h
 )
-
-# After UI.start(), call UI.connect() for auto-connect
 h = re.sub(
     r"(UI\.start\(defaults, document\.getElementById\('noVNC_screen'\)\);)",
-    r"\1\n        // Auto-connect\n        setTimeout(function() { UI.connect(); }, 500);",
+    r"\1\n        setTimeout(function() { UI.connect(); }, 500);",
     h
 )
-
 with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
-print("Created index.html (vnc.html + patched ui.js + UI.connect() auto-connect)")
+print("Created index.html")
 PYEOF
 
-# ---------- 诊断：关键路径检查 ----------
+echo "=== 启动双向同步 ==="
+if [ -f /root/sync.sh ]; then
+    chmod +x /root/sync.sh
+    /root/sync.sh start
+else
+    echo "sync.sh 未找到，跳过"
+fi
+
+# ---------- 诊断信息 ----------
 echo "=== 诊断信息 ==="
 echo "qwenpaw: $(command -v qwenpaw 2>/dev/null || echo '未找到')"
 echo "google-chrome: $(command -v google-chrome 2>/dev/null || echo '未找到')"
