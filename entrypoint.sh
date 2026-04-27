@@ -80,13 +80,14 @@ export DefaultIMModule=fcitx
 
 # 确保 dbus 在运行（不用 dbus-run-session，避免阻塞）
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
-    eval $(dbus-launch --sh-syntax)
+    eval $(dbus-launch --fork --sh-syntax)
 fi
 export DBUS_SESSION_BUS_ADDRESS
 
 fcitx -d 2>/dev/null &
 sleep 1
 
+xdg-settings set default-web-browser google-chrome.desktop
 exec /usr/bin/startxfce4
 XSTARTUP
 chmod +x /root/.vnc/xstartup
@@ -125,7 +126,7 @@ if command -v google-chrome &>/dev/null && command -v Xvfb &>/dev/null; then
         --disable-dev-shm-usage \
         --remote-debugging-port=9222 \
         --user-data-dir=/root/.chrome-debug \
-        --kiosk "http://localhost:7860" \
+        --new-window "http://localhost:7860" \
         > /tmp/chrome.log 2>&1 &
     echo "Chrome PID: $!"
     sleep 2
