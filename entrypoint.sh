@@ -10,7 +10,7 @@ echo "========================================"
 # ---------- 修复 noVNC clipboard bug + 构建 auto-connect index ----------
 echo "=== 修复 noVNC clipboard bug + auto-connect ==="
 python3 - << 'PYEOF'
-import os, re, time, shutil
+import os, re, time
 
 src = "/opt/noVNC/app/ui.js"
 if not os.path.exists(src):
@@ -38,29 +38,30 @@ print(f"Patched ui.js -> ui.{ts}.js ({done} patches)")
 
 vnc_html = "/opt/noVNC/vnc.html"
 with open(vnc_html) as f: h = f.read()
+
+# Update import to renamed ui.js
 h = re.sub(
     r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
     f"import UI from './app/ui.{ts}.js'",
     h
 )
+
+# After UI.start(), call UI.connect() for auto-connect
 h = re.sub(
-    r"(defaults = await response\.json\(\);)",
-    r"\1\n        defaults['host'] = 'localhost';\n        defaults['port'] = '7860';\n        defaults['connect'] = true;",
+    r"(UI\.start\(defaults, document\.getElementById\('noVNC_screen'\)\);)",
+    r"\1\n        // Auto-connect\n        setTimeout(function() { UI.connect(); }, 500);",
     h
 )
+
 with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
-print("Created index.html (vnc.html + patched ui.js + auto-connect)")
+print("Created index.html (vnc.html + patched ui.js + UI.connect() auto-connect)")
 PYEOF
 
 # ---------- 诊断：关键路径检查 ----------
 echo "=== 诊断信息 ==="
 echo "qwenpaw: $(command -v qwenpaw 2>/dev/null || echo '未找到')"
-echo "qwenpaw venv pip: $(ls /root/.qwenpaw/venv/bin/pip 2>/dev/null || echo '未找到')"
-echo "qwenpaw site-packages: $(ls /root/.qwenpaw/venv/lib/python*/site-packages/qwenpaw* 2>/dev/null | head -1 || echo '未找到')"
 echo "google-chrome: $(command -v google-chrome 2>/dev/null || echo '未找到')"
 echo "websockify: $(command -v websockify 2>/dev/null || echo '未找到')"
-echo "Xvfb: $(command -v Xvfb 2>/dev/null || echo '未找到')"
-echo "uv: $(command -v uv 2>/dev/null || echo '未找到')"
 echo "noVNC index.html: $(ls /opt/noVNC/index.html 2>/dev/null || echo '未找到')"
 python3 --version
 
@@ -78,7 +79,6 @@ export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 export DefaultIMModule=fcitx
 
-# 确保 dbus 在运行（不用 dbus-run-session，避免阻塞）
 if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
     eval $(dbus-launch --fork --sh-syntax)
 fi
@@ -88,10 +88,30 @@ fcitx -d 2>/dev/null &
 sleep 1
 
 xdg-settings set default-web-browser google-chrome.desktop
+xdg-mime default google-chrome.desktop x-scheme-handler/http
+xdg-mime default google-chrome.desktop x-scheme-handler/https
+xdg-mime default google-chrome.desktop text/html
+
 exec /usr/bin/startxfce4
 XSTARTUP
 chmod +x /root/.vnc/xstartup
 echo "=== xstartup 创建完成 ==="
+
+# ---------- 创建 Chrome .desktop 文件 ----------
+mkdir -p /root/.local/share/applications
+cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Google Chrome
+Comment=Access the Internet
+Exec=/usr/bin/google-chrome --no-sandbox %U
+Icon=/usr/share/icons/hicolor/48x48/apps/google-chrome.png
+Categories=Network;WebBrowser;
+Terminal=false
+DESKTOP_EOF
+cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
+echo "Chrome .desktop 文件已创建"
 
 # ---------- 启动 VNC ----------
 echo "启动 VNC 服务器..."
@@ -115,33 +135,15 @@ echo "启动 noVNC (7860)..."
 websockify --web /opt/noVNC 7860 localhost:5901 &
 sleep 2
 
-# ---------- 创建 Chrome .desktop 文件（让用户在桌面里手动点开） ----------
-mkdir -p /root/.local/share/applications
-cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Google Chrome
-Comment=Access the Internet
-Exec=/usr/bin/google-chrome --no-sandbox %U
-Icon=/usr/share/icons/hicolor/48x48/apps/google-chrome.png
-Categories=Network;WebBrowser;
-Terminal=false
-DESKTOP_EOF
-cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
-update-desktop-database /usr/share/applications/ 2>/dev/null || true
-echo "Chrome .desktop 文件已创建，桌面里点击图标即可打开" 
-
 # ---------- 启动 qwenpaw ----------
 if [ -x /root/.qwenpaw/venv/bin/qwenpaw ]; then
     echo "启动 qwenpaw (8088)..."
-    # 检查 venv 内 qwenpaw
     /root/.qwenpaw/venv/bin/pip list 2>/dev/null | grep -i qwenpaw || echo "WARNING: qwenpaw not in pip list"
     cd /root
     nohup /root/.qwenpaw/venv/bin/qwenpaw app --host 0.0.0.0 --port 8088 > /root/qwenpaw.log 2>&1 &
     echo "qwenpaw PID: $!"
     sleep 3
-    cat /root/qwenpaw.log 2>/dev/null || echo "(无日志)"
+    cat /root/qwenpaw.log 2>/dev/null | tail -5 || echo "(无日志)"
 else
     echo "qwenpaw 未安装，跳过"
 fi
