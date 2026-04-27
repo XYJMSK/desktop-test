@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     scrot xclip htop neofetch jq \
     python3 python3-pip python3-venv websockify rsync inotify-tools \
     net-tools iputils-ping procps \
-    && rm -rf /var/lib/apt/lists/*
 
 ENV LANG=zh_CN.UTF-8
 ENV LANGUAGE=zh_CN:zh
@@ -33,12 +32,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfce4-panel-profiles xfce4-notifyd xfce4-taskmanager \
     xfce4-screenshooter xfce4-appfinder \
     thunar-archive-plugin mousepad ristretto \
-    && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第三层：主题引擎 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gtk2-engines-murrine gtk2-engines-pixbuf \
-    && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第四层：VNC 服务器 + 生成密码文件 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -60,17 +57,9 @@ RUN mkdir -p /opt/noVNC \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget gnupg \
     && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get update \
     && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
     && rm google-chrome-stable_current_amd64.deb \
-    && rm -rf /var/lib/apt/lists/*
 
-# ---------- 第七层：VS Code ----------
-RUN wget -qO /tmp/vscode.deb "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends /tmp/vscode.deb \
-    && rm /tmp/vscode.deb \
-    && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
 # qwenpaw 版本控制
