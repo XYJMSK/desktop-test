@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     scrot xclip htop neofetch jq \
     python3 python3-pip python3-venv websockify rsync inotify-tools \
     net-tools iputils-ping procps \
-
+    && rm -rf /var/lib/apt/lists/*
 ENV LANG=zh_CN.UTF-8
 ENV LANGUAGE=zh_CN:zh
 ENV LC_ALL=zh_CN.UTF-8
@@ -32,10 +32,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfce4-panel-profiles xfce4-notifyd xfce4-taskmanager \
     xfce4-screenshooter xfce4-appfinder \
     thunar-archive-plugin mousepad ristretto \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第三层：主题引擎 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gtk2-engines-murrine gtk2-engines-pixbuf \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第四层：VNC 服务器 + 生成密码文件 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -57,9 +59,10 @@ RUN mkdir -p /opt/noVNC \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget gnupg \
     && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get update \
     && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
     && rm google-chrome-stable_current_amd64.deb \
-
+    && rm -rf /var/lib/apt/lists/*
 
 # ============================================================
 # qwenpaw 版本控制
@@ -67,17 +70,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV QWENPAW_VERSION=latest
 
 # ---------- 安装 uv ----------
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/root/.local/bin:$PATH"
 
 # ---------- 安装 Python 3.12 + qwenpaw ----------
-RUN /root/.local/bin/uv python install 3.12 && \
-    /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv && \
-    /root/.qwenpaw/venv/bin/pip install --upgrade pip && \
-    if [ "${QWENPAW_VERSION}" = "latest" ]; then \
+RUN /root/.local/bin/uv python install 3.12 \
+    && /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv \
+    && /root/.qwenpaw/venv/bin/pip install --upgrade pip \
+    && if [ "${QWENPAW_VERSION}" = "latest" ]; then \
         /root/.qwenpaw/venv/bin/pip install qwenpaw; \
     else \
         /root/.qwenpaw/venv/bin/pip install "qwenpaw==${QWENPAW_VERSION}"; \
@@ -88,7 +91,7 @@ RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
 # ---------- 复制入口脚本 ----------
 COPY sync.sh /root/sync.sh
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh /root/sync.sh
 
 WORKDIR /root
 
