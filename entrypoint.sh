@@ -21,6 +21,7 @@ Categories=Network;WebBrowser;
 Terminal=false
 DESKTOP_EOF
 cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
+sed -i 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-default-browser-check|' /usr/share/applications/com.google.Chrome.desktop 2>/dev/null || true
 
 xdg-mime default google-chrome.desktop x-scheme-handler/http
 xdg-mime default google-chrome.desktop x-scheme-handler/https
