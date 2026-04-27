@@ -66,20 +66,29 @@ python3 --version
 
 # ---------- 创建 xstartup ----------
 mkdir -p /root/.vnc
-printf '%s\n' \
-  '#!/bin/bash' \
-  'unset SESSION_MANAGER' \
-  'unset DBUS_SESSION_BUS_ADDRESS' \
-  'export LANG=zh_CN.UTF-8' \
-  'export LANGUAGE=zh_CN:zh' \
-  'export LC_ALL=zh_CN.UTF-8' \
-  'export GTK_IM_MODULE=fcitx' \
-  'export QT_IM_MODULE=fcitx' \
-  'export XMODIFIERS=@im=fcitx' \
-  'export DefaultIMModule=fcitx' \
-  'fcitx -d 2>/dev/null' \
-  'dbus-run-session -- /usr/bin/startxfce4' \
-  > /root/.vnc/xstartup
+cat > /root/.vnc/xstartup << 'XSTARTUP'
+#!/bin/bash
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+export LANG=zh_CN.UTF-8
+export LANGUAGE=zh_CN:zh
+export LC_ALL=zh_CN.UTF-8
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export DefaultIMModule=fcitx
+
+# 确保 dbus 在运行（不用 dbus-run-session，避免阻塞）
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+    eval $(dbus-launch --sh-syntax)
+fi
+export DBUS_SESSION_BUS_ADDRESS
+
+fcitx -d 2>/dev/null &
+sleep 1
+
+exec /usr/bin/startxfce4
+XSTARTUP
 chmod +x /root/.vnc/xstartup
 echo "=== xstartup 创建完成 ==="
 
