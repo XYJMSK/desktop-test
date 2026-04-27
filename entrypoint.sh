@@ -7,6 +7,27 @@ echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
+# ---------- 全局：设置默认浏览器（在桌面启动前就设好） ----------
+mkdir -p /root/.local/share/applications
+cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Google Chrome
+Comment=Access the Internet
+Exec=/usr/bin/google-chrome --no-sandbox --no-default-browser-check %U
+Icon=/usr/share/icons/hicolor/48x48/apps/google-chrome.png
+Categories=Network;WebBrowser;
+Terminal=false
+DESKTOP_EOF
+cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
+
+xdg-mime default google-chrome.desktop x-scheme-handler/http
+xdg-mime default google-chrome.desktop x-scheme-handler/https
+xdg-mime default google-chrome.desktop text/html
+xdg-settings set default-web-browser google-chrome.desktop
+echo "默认浏览器已设为 Chrome"
+
 # ---------- 修复 noVNC clipboard bug + 构建 auto-connect index ----------
 echo "=== 修复 noVNC clipboard bug + auto-connect ==="
 python3 - << 'PYEOF'
@@ -87,31 +108,10 @@ export DBUS_SESSION_BUS_ADDRESS
 fcitx -d 2>/dev/null &
 sleep 1
 
-xdg-settings set default-web-browser google-chrome.desktop
-xdg-mime default google-chrome.desktop x-scheme-handler/http
-xdg-mime default google-chrome.desktop x-scheme-handler/https
-xdg-mime default google-chrome.desktop text/html
-
 exec /usr/bin/startxfce4
 XSTARTUP
 chmod +x /root/.vnc/xstartup
 echo "=== xstartup 创建完成 ==="
-
-# ---------- 创建 Chrome .desktop 文件 ----------
-mkdir -p /root/.local/share/applications
-cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Google Chrome
-Comment=Access the Internet
-Exec=/usr/bin/google-chrome --no-sandbox %U
-Icon=/usr/share/icons/hicolor/48x48/apps/google-chrome.png
-Categories=Network;WebBrowser;
-Terminal=false
-DESKTOP_EOF
-cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
-echo "Chrome .desktop 文件已创建"
 
 # ---------- 启动 VNC ----------
 echo "启动 VNC 服务器..."
@@ -138,7 +138,6 @@ sleep 2
 # ---------- 启动 qwenpaw ----------
 if [ -x /root/.qwenpaw/venv/bin/qwenpaw ]; then
     echo "启动 qwenpaw (8088)..."
-    /root/.qwenpaw/venv/bin/pip list 2>/dev/null | grep -i qwenpaw || echo "WARNING: qwenpaw not in pip list"
     cd /root
     nohup /root/.qwenpaw/venv/bin/qwenpaw app --host 0.0.0.0 --port 8088 > /root/qwenpaw.log 2>&1 &
     echo "qwenpaw PID: $!"
