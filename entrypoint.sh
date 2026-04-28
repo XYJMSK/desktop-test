@@ -7,6 +7,15 @@ echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
 
+# ---------- 恢复 API Keys（持久化层 → 环境变量） ----------
+if [ -f /mnt/workspace/root/.mmx/config.json ]; then
+    MINIMAX_KEY=$(python3 -c "import json; d=json.load(open('/mnt/workspace/root/.mmx/config.json')); print(d.get('api_key',''))" 2>/dev/null)
+    if [ -n "$MINIMAX_KEY" ]; then
+        export MINIMAX_API_KEY="$MINIMAX_KEY"
+        echo "MiniMax API Key 已恢复"
+    fi
+fi
+
 # ---------- 全局：设置默认浏览器 ----------
 mkdir -p /root/.local/share/applications
 cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'

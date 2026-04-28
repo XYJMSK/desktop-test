@@ -11,6 +11,7 @@ DST_BASE="/mnt/workspace/root"
 # 要同步的目录列表（相对于 $SRC_BASE）
 # 注意：.qwenpaw 不整体同步，只同步内部子目录（见 below）
 SYNC_DIRS=(
+    ".qwenpaw.secret"
     ".mmx"
     ".ssh"
     ".config/fcitx"
