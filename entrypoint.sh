@@ -2,6 +2,13 @@
 exec > /tmp/entrypoint.log 2>&1
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
+# 清理 KDE 环境变量（基础镜像有 KDE 残留）
+unset KDE_FULL_SESSION
+unset KDE_SESSION_VERSION
+export XDG_CURRENT_DESKTOP=XFCE
+export XDG_RUNTIME_DIR=/tmp/runtime-root
+mkdir -p /tmp/runtime-root && chmod 700 /tmp/runtime-root
+
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
@@ -98,6 +105,13 @@ python3 --version
 mkdir -p /root/.vnc
 cat > /root/.vnc/xstartup << 'XSTARTUP'
 #!/bin/bash
+# 清理 KDE 环境，强制 XFCE
+unset KDE_FULL_SESSION
+unset KDE_SESSION_VERSION
+export XDG_CURRENT_DESKTOP=XFCE
+export XDG_RUNTIME_DIR=/tmp/runtime-root
+mkdir -p /tmp/runtime-root 2>/dev/null && chmod 700 /tmp/runtime-root
+
 unset SESSION_MANAGER
 unset DBUS_SESSION_BUS_ADDRESS
 export LANG=zh_CN.UTF-8
