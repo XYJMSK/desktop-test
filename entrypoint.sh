@@ -17,25 +17,19 @@ if [ -f /mnt/workspace/root/.mmx/config.json ]; then
 fi
 
 # ---------- 全局：设置默认浏览器 ----------
-mkdir -p /root/.local/share/applications
-cat > /root/.local/share/applications/google-chrome.desktop << 'DESKTOP_EOF'
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Google Chrome
-Comment=Access the Internet
-Exec=/usr/bin/google-chrome --no-sandbox --no-default-browser-check %U
-Icon=/usr/share/icons/hicolor/48x48/apps/google-chrome.png
-Categories=Network;WebBrowser;
-Terminal=false
-DESKTOP_EOF
-cp /root/.local/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null || true
-sed -i 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-default-browser-check|' /usr/share/applications/com.google.Chrome.desktop 2>/dev/null || true
-xdg-mime default google-chrome.desktop x-scheme-handler/http
-xdg-mime default google-chrome.desktop x-scheme-handler/https
-xdg-mime default google-chrome.desktop text/html
-xdg-settings set default-web-browser google-chrome.desktop
-echo "默认浏览器已设为 Chrome"
+# 用完整的系统 desktop 文件，只替换 Exec 行添加 --no-default-browser-check
+if [ -f /usr/share/applications/google-chrome.desktop ]; then
+    sed 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-default-browser-check|g' \
+        /usr/share/applications/google-chrome.desktop \
+        > /root/.local/share/applications/google-chrome.desktop
+    xdg-mime default google-chrome.desktop x-scheme-handler/http
+    xdg-mime default google-chrome.desktop x-scheme-handler/https
+    xdg-mime default google-chrome.desktop text/html
+    xdg-settings set default-web-browser google-chrome.desktop
+    echo "默认浏览器已设为 Chrome"
+else
+    echo "警告：未找到 Chrome desktop 文件"
+fi
 
 # ---------- 修复 noVNC clipboard bug + 构建 auto-connect index ----------
 echo "=== 修复 noVNC clipboard bug + auto-connect ==="
