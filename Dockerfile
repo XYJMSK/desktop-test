@@ -64,29 +64,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm google-chrome-stable_current_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
-# ============================================================
-# qwenpaw 版本控制
-# ============================================================
-ENV QWENPAW_VERSION=latest
-
-# ---------- 安装 uv ----------
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && rm -rf /var/lib/apt/lists/*
-
+# ---------- 第七层：uv ----------
+RUN curl -LsSf https://astral.sh/uv/0.6.6/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-# ---------- 安装 Python 3.12 + qwenpaw ----------
-RUN /root/.local/bin/uv python install 3.12 \
-    && /root/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/bin/python3.12 -m venv /root/.qwenpaw/venv \
-    && /root/.qwenpaw/venv/bin/pip install --upgrade pip \
-    && if [ "${QWENPAW_VERSION}" = "latest" ]; then \
-        /root/.qwenpaw/venv/bin/pip install qwenpaw; \
-    else \
-        /root/.qwenpaw/venv/bin/pip install "qwenpaw==${QWENPAW_VERSION}"; \
-    fi
-
-RUN ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
+# ---------- 第八层：qwenpaw（hermes-agent 方案：用系统 Python 建 venv） ----------
+RUN python3 -m venv /root/.qwenpaw/venv \
+    && /root/.local/bin/uv pip install --python /root/.qwenpaw/venv/bin/python --no-cache qwenpaw \
+    && ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
 
 # ---------- 复制入口脚本 ----------
 COPY sync.sh /root/sync.sh
