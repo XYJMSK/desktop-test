@@ -9,6 +9,17 @@ export XDG_CURRENT_DESKTOP=XFCE
 export XDG_RUNTIME_DIR=/tmp/runtime-root
 mkdir -p /tmp/runtime-root && chmod 700 /tmp/runtime-root
 
+# 替换 KDE opener → Chrome wrapper（彻底消除 KIO 拦截）
+if [ -x /usr/bin/kde-open5 ]; then
+    mv /usr/bin/kde-open5 /usr/bin/kde-open5.real
+    cat > /usr/bin/kde-open5 << 'KDEW'
+#!/bin/bash
+exec /usr/local/bin/google-chrome-wrapper "$@"
+KDEW
+    chmod +x /usr/bin/kde-open5
+    echo "kde-open5 → Chrome wrapper"
+fi
+
 echo "========================================"
 echo "  Linux Desktop Container 启动中..."
 echo "========================================"
