@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfce4 xfce4-terminal xfce4-whiskermenu-plugin \
     xfce4-panel-profiles xfce4-notifyd xfce4-taskmanager \
     xfce4-screenshooter xfce4-appfinder \
-    thunar-archive-plugin mousepad ristretto \
+    thunar-archive-plugin mousepad ristretto exo-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第三层：主题引擎 ----------
