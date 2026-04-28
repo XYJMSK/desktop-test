@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 exec > /tmp/entrypoint.log 2>&1
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 
@@ -21,14 +20,14 @@ fi
 if [ -f /usr/share/applications/google-chrome.desktop ]; then
     sed 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-default-browser-check|g' \
         /usr/share/applications/google-chrome.desktop \
-        > /root/.local/share/applications/google-chrome.desktop
-    xdg-mime default google-chrome.desktop x-scheme-handler/http
-    xdg-mime default google-chrome.desktop x-scheme-handler/https
-    xdg-mime default google-chrome.desktop text/html
-    xdg-settings set default-web-browser google-chrome.desktop
+        > /root/.local/share/applications/google-chrome.desktop || true
+    xdg-mime default google-chrome.desktop x-scheme-handler/http 2>/dev/null || true
+    xdg-mime default google-chrome.desktop x-scheme-handler/https 2>/dev/null || true
+    xdg-mime default google-chrome.desktop text/html 2>/dev/null || true
+    xdg-settings set default-web-browser google-chrome.desktop 2>/dev/null || true
     echo "默认浏览器已设为 Chrome"
 else
-    echo "警告：未找到 Chrome desktop 文件"
+    echo "警告：未找到 Chrome desktop 文件，跳过"
 fi
 
 # ---------- 修复 noVNC clipboard bug + 构建 auto-connect index ----------
