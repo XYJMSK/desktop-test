@@ -155,6 +155,11 @@ else
     echo "qwenpaw 未安装，跳过"
 fi
 
+# ---------- 启动 Chrome 窗口 ----------
+echo "启动 Chrome..."
+DISPLAY=:1 nohup /usr/local/bin/google-chrome-wrapper     --new-window about:blank > /dev/null 2>&1 &
+echo "Chrome 已启动"
+
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
 echo "  noVNC:   http://localhost:7860"
