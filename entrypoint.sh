@@ -16,16 +16,19 @@ if [ -f /mnt/workspace/root/.mmx/config.json ]; then
 fi
 
 # ---------- 全局：设置默认浏览器 ----------
-# 用完整的系统 desktop 文件，只替换 Exec 行添加 --no-default-browser-check
 if [ -f /usr/share/applications/google-chrome.desktop ]; then
     sed 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-default-browser-check|g' \
         /usr/share/applications/google-chrome.desktop \
-        > /root/.local/share/applications/google-chrome.desktop || true
-    xdg-mime default google-chrome.desktop x-scheme-handler/http 2>/dev/null || true
-    xdg-mime default google-chrome.desktop x-scheme-handler/https 2>/dev/null || true
-    xdg-mime default google-chrome.desktop text/html 2>/dev/null || true
-    xdg-settings set default-web-browser google-chrome.desktop 2>/dev/null || true
-    echo "默认浏览器已设为 Chrome"
+        > /root/.local/share/applications/google-chrome.desktop
+    if [ -f /root/.local/share/applications/google-chrome.desktop ]; then
+        xdg-mime default google-chrome.desktop x-scheme-handler/http 2>/dev/null || true
+        xdg-mime default google-chrome.desktop x-scheme-handler/https 2>/dev/null || true
+        xdg-mime default google-chrome.desktop text/html 2>/dev/null || true
+        xdg-settings set default-web-browser google-chrome.desktop 2>/dev/null || true
+        echo "默认浏览器已设为 Chrome"
+    else
+        echo "警告：Chrome desktop 文件创建失败，跳过"
+    fi
 else
     echo "警告：未找到 Chrome desktop 文件，跳过"
 fi
