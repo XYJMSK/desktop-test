@@ -180,11 +180,14 @@ else
     echo "qwenpaw 未安装，跳过"
 fi
 
-# ---------- 启动 Chrome 窗口 ----------
-echo "启动 Chrome..."
-sleep 3
+# ---------- 清理旧 Chrome + 启动新窗口 ----------
+echo "清理旧 Chrome 进程..."
+# 先清理之前残留的 Chrome 进程，避免连接到无窗口的旧会话
+pkill -f "/opt/google/chrome/chrome" 2>/dev/null || true
+sleep 1
+echo "启动 Chrome 窗口..."
 DISPLAY=:1 nohup /usr/local/bin/google-chrome-wrapper \
-    --new-window about:blank > /dev/null 2>/root/chrome-err.log &
+    --new-window --force-new-window about:blank > /dev/null 2>/root/chrome-err.log &
 CHROME_PID=$!
 sleep 3
 if kill -0 $CHROME_PID 2>/dev/null; then
