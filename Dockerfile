@@ -71,7 +71,9 @@ ENV PATH="/root/.local/bin:$PATH"
 # ---------- 第八层：qwenpaw（hermes-agent 方案：用系统 Python 建 venv） ----------
 RUN python3 -m venv /root/.qwenpaw/venv \
     && /root/.local/bin/uv pip install --python /root/.qwenpaw/venv/bin/python --no-cache qwenpaw \
-    && ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw
+    && ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw \
+    && echo "=== qwenpaw 验证 ===" \
+    && /root/.qwenpaw/venv/bin/qwenpaw --version
 
 # ---------- 复制入口脚本 ----------
 COPY sync.sh /root/sync.sh
