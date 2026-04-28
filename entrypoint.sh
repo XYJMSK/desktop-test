@@ -17,7 +17,7 @@ fi
 
 # ---------- 全局：设置默认浏览器 ----------
 if [ -f /usr/share/applications/google-chrome.desktop ]; then
-    sed 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-default-browser-check|g' \
+    sed 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-sandbox --no-default-browser-check|g' \
         /usr/share/applications/google-chrome.desktop \
         > /root/.local/share/applications/google-chrome.desktop
     if [ -f /root/.local/share/applications/google-chrome.desktop ]; then
