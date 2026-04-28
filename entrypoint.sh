@@ -171,8 +171,17 @@ fi
 
 # ---------- 启动 Chrome 窗口 ----------
 echo "启动 Chrome..."
-DISPLAY=:1 nohup /usr/local/bin/google-chrome-wrapper     --new-window about:blank > /dev/null 2>&1 &
-echo "Chrome 已启动"
+sleep 3
+DISPLAY=:1 nohup /usr/local/bin/google-chrome-wrapper \
+    --new-window about:blank > /dev/null 2>/root/chrome-err.log &
+CHROME_PID=$!
+sleep 3
+if kill -0 $CHROME_PID 2>/dev/null; then
+    echo "Chrome 已启动 (PID: $CHROME_PID)"
+else
+    echo "Chrome 启动失败，错误日志："
+    cat /root/chrome-err.log 2>/dev/null || echo "(无日志)"
+fi
 
 echo "========================================"
 echo "  Linux Desktop Container 已就绪！"
@@ -185,5 +194,10 @@ if [ -d "/root/startup" ] && [ -f "/root/startup/main.sh" ]; then
     chmod +x /root/startup/main.sh
     /root/startup/main.sh
 fi
+
+# ---------- 诊断：测试 xdg-open ----------
+echo "测试 xdg-open..."
+DISPLAY=:1 xdg-open about:blank 2>/tmp/xdg-err.log
+echo "xdg-open 退出码: $?"
 
 wait
