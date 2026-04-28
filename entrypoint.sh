@@ -34,9 +34,27 @@ if [ -f /mnt/workspace/root/.mmx/config.json ]; then
 fi
 
 # ---------- 全局：设置默认浏览器 ----------
+mkdir -p /root/.local/share/applications
+# 创建 Chrome wrapper（部分镜像不提供）
+if [ ! -x /usr/local/bin/google-chrome-wrapper ]; then
+    cat > /usr/local/bin/google-chrome-wrapper << 'WRAP'
+#!/bin/bash
+exec /usr/bin/google-chrome --no-sandbox --disable-dev-shm-usage --disable-gpu "$@"
+WRAP
+    chmod +x /usr/local/bin/google-chrome-wrapper
+    echo "google-chrome-wrapper 已创建"
+fi
 if [ -f /usr/share/applications/google-chrome.desktop ]; then
-    sed 's|Exec=/usr/bin/google-chrome-stable|Exec=/usr/bin/google-chrome-stable --no-sandbox --no-default-browser-check|g' \
-        /usr/share/applications/google-chrome.desktop \
+    DESKTOP_SRC=/usr/share/applications/google-chrome.desktop
+elif [ -f /usr/share/applications/com.google.Chrome.desktop ]; then
+    DESKTOP_SRC=/usr/share/applications/com.google.Chrome.desktop
+else
+    DESKTOP_SRC=
+fi
+
+if [ -n "$DESKTOP_SRC" ]; then
+    sed 's|Exec=/usr/bin/google-chrome-stable[^ ]*|Exec=/usr/local/bin/google-chrome-wrapper|g' \
+        "$DESKTOP_SRC" \
         > /root/.local/share/applications/google-chrome.desktop
     if [ -f /root/.local/share/applications/google-chrome.desktop ]; then
         xdg-mime default google-chrome.desktop x-scheme-handler/http 2>/dev/null || true
