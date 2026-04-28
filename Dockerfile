@@ -65,7 +65,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------- 第七层：uv ----------
-RUN pip install uv
+RUN pip install --break-system-packages uv
 ENV PATH="/root/.local/bin:$PATH"
 
 # ---------- 第八层：qwenpaw（hermes-agent 方案：用系统 Python 建 venv） ----------
