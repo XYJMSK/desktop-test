@@ -47,15 +47,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && printf 'vncpass\nvncpass\nn\n' | tigervncpasswd \
     && chmod 600 /root/.vnc/passwd
 
-# ---------- 第五层：Chrome（Google Chrome，加超时重试） ----------
+# ---------- 第五层：Chrome（Debian 源安装，更快） ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget gnupg \
-    && wget -q --timeout=60 --tries=3 \
-       https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
-    && rm google-chrome-stable_current_amd64.deb \
-    && rm -rf /var/lib/apt/lists/*
+    chromium chromium-l10n \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/chromium /usr/bin/google-chrome \
+    && ln -sf /usr/bin/chromium /usr/bin/google-chrome-stable
 
 # ---------- 第六层：uv ----------
 RUN pip install --break-system-packages uv
