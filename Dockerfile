@@ -47,10 +47,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && printf 'vncpass\nvncpass\nn\n' | tigervncpasswd \
     && chmod 600 /root/.vnc/passwd
 
-# ---------- 第五层：noVNC（Debian 包已包含，只需确认） ----------
-RUN echo "noVNC $(dpkg -l novnc 2>/dev/null | tail -1 | awk '{print $3}')  已安装于 /usr/share/novnc"
-
-# ---------- 第六层：Chrome ----------
+# ---------- 第五层：Chrome ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget gnupg \
     && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
@@ -59,10 +56,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm google-chrome-stable_current_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------- 第七层：uv ----------
+# ---------- 第六层：uv ----------
 RUN pip install --break-system-packages uv
 
-# ---------- 第八层：qwenpaw（hermes-agent 方案：用系统 Python 建 venv） ----------
+# ---------- 第七层：qwenpaw（hermes-agent 方案：用系统 Python 建 venv） ----------
 RUN python3 -m venv /root/.qwenpaw/venv \
     && uv pip install --python /root/.qwenpaw/venv/bin/python --no-cache qwenpaw \
     && ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw \
