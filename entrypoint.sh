@@ -102,8 +102,16 @@ vnc_html = "/usr/share/novnc/vnc.html"
 with open(vnc_html) as f: h = f.read()
 h = re.sub(
     r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
+    f"import UI from './app/ui.{ts}.js'",
+    h
+)
+h = re.sub(
+    r"(UI\.start\(defaults, document\.getElementById\('noVNC_screen'\)\);)",
+    r"defaults.host = 'localhost';\n        defaults.port = 7860;\n        defaults.connect = true;\n        defaults.auto_reconnect = true;\n        \1",
+    h
+)
 with open("/usr/share/novnc/index.html", 'w') as f: f.write(h)
-print("Created index.html (auto-connect enabled)")
+print("Created index.html (auto-connect with host:port)")
 PYEOF
 
 echo "=== 启动双向同步 ==="
