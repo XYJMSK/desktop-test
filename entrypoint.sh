@@ -72,7 +72,7 @@ fi
 # ---------- 修复 noVNC clipboard bug + 构建 auto-connect index ----------
 echo "=== 修复 noVNC clipboard bug + auto-connect ==="
 python3 - << 'PYEOF'
-import os, re, time
+import os, time
 
 src = "/usr/share/novnc/app/ui.js"
 if not os.path.exists(src):
@@ -82,10 +82,14 @@ if not os.path.exists(src):
 with open(src) as f: c = f.read()
 
 patches = [
+    # Clipboard null pointer guard
     ('document.getElementById("noVNC_clipboard_button")\n            .addEventListener',
      'var _cb=document.getElementById("noVNC_clipboard_button");if(_cb)_cb.addEventListener'),
     ('document.getElementById("noVNC_clipboard_text")\n            .addEventListener',
      'var _ct=document.getElementById("noVNC_clipboard_text");if(_ct)_ct.addEventListener'),
+    # Auto-connect: set host/port/WebUtil defaults before UI.prime()
+    ("UI.prime();",
+     "WebUtil.setSetting('host', 'localhost');\n        WebUtil.setSetting('port', '7860');\n        WebUtil.setSetting('autoconnect', 'true');\n        UI.prime();"),
 ]
 done = 0
 for old, new in patches:
@@ -98,20 +102,12 @@ patched = f"/usr/share/novnc/app/ui.{ts}.js"
 with open(patched, 'w') as f: f.write(c)
 print(f"Patched ui.js -> ui.{ts}.js ({done} patches)")
 
+# Patch vnc.html to load the patched ui.js
 vnc_html = "/usr/share/novnc/vnc.html"
 with open(vnc_html) as f: h = f.read()
-h = re.sub(
-    r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
-    f"import UI from './app/ui.{ts}.js'",
-    h
-)
-h = re.sub(
-    r"(UI\.start\(defaults, document\.getElementById\('noVNC_screen'\)\);)",
-    r"defaults.host = 'localhost';\n        defaults.port = 7860;\n        defaults.connect = true;\n        defaults.auto_reconnect = true;\n        \1",
-    h
-)
+h = h.replace('src="app/ui.js"', f'src="app/ui.{ts}.js"')
 with open("/usr/share/novnc/index.html", 'w') as f: f.write(h)
-print("Created index.html (auto-connect with host:port)")
+print("Created index.html (loads patched ui.js with auto-connect)")
 PYEOF
 
 echo "=== 启动双向同步 ==="
