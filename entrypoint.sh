@@ -110,13 +110,9 @@ h = re.sub(
     r"defaults.connect = true;\n        defaults.auto_reconnect = true;\n        \1",
     h
 )
-with open("/opt/noVNC/vnc.html", 'w') as f: f.write(h)
-# 清理旧 index.html（避免干扰）
-old_idx = "/opt/noVNC/index.html"
-if os.path.exists(old_idx):
-    os.remove(old_idx)
-    print("Removed old index.html")
-print("Patched vnc.html (auto-connect enabled)")
+with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
+# 不要删除 vnc.html，防止 index.html 不生效时备用
+print("Created index.html (auto-connect enabled, vnc.html kept as fallback)")
 PYEOF
 
 echo "=== 启动双向同步 ==="
