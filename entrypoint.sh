@@ -74,7 +74,7 @@ echo "=== 修复 noVNC clipboard bug + auto-connect ==="
 python3 - << 'PYEOF'
 import os, re, time
 
-src = "/opt/noVNC/app/ui.js"
+src = "/usr/share/novnc/app/ui.js"
 if not os.path.exists(src):
     print("ERROR: ui.js not found at", src)
     exit(1)
@@ -94,25 +94,16 @@ for old, new in patches:
         done += 1
 
 ts = str(int(time.time()))
-patched = f"/opt/noVNC/app/ui.{ts}.js"
+patched = f"/usr/share/novnc/app/ui.{ts}.js"
 with open(patched, 'w') as f: f.write(c)
 print(f"Patched ui.js -> ui.{ts}.js ({done} patches)")
 
-vnc_html = "/opt/noVNC/vnc.html"
+vnc_html = "/usr/share/novnc/vnc.html"
 with open(vnc_html) as f: h = f.read()
 h = re.sub(
     r'import UI from [\'"]\./app/ui(?:\.[a-f0-9]+\.js)?[\'"]',
-    f"import UI from './app/ui.{ts}.js'",
-    h
-)
-h = re.sub(
-    r"(UI\.start\(defaults, document\.getElementById\('noVNC_screen'\)\);)",
-    r"defaults.connect = true;\n        defaults.auto_reconnect = true;\n        \1",
-    h
-)
-with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
-# 不要删除 vnc.html，防止 index.html 不生效时备用
-print("Created index.html (auto-connect enabled, vnc.html kept as fallback)")
+with open("/usr/share/novnc/index.html", 'w') as f: f.write(h)
+print("Created index.html (auto-connect enabled)")
 PYEOF
 
 echo "=== 启动双向同步 ==="
@@ -128,7 +119,7 @@ echo "=== 诊断信息 ==="
 echo "qwenpaw: $(command -v qwenpaw 2>/dev/null || echo '未找到')"
 echo "google-chrome: $(command -v google-chrome 2>/dev/null || echo '未找到')"
 echo "websockify: $(command -v websockify 2>/dev/null || echo '未找到')"
-echo "noVNC index.html: $(ls /opt/noVNC/index.html 2>/dev/null || echo '未找到')"
+echo "noVNC index.html: $(ls /usr/share/novnc/index.html 2>/dev/null || echo '未找到')"
 python3 --version
 
 # ---------- 创建 xstartup ----------
@@ -184,7 +175,7 @@ ss -tlnp 2>/dev/null | grep -E "5901|7860|8088" || netstat -tlnp 2>/dev/null | g
 
 # ---------- 启动 noVNC ----------
 echo "启动 noVNC (7860)..."
-websockify --web /opt/noVNC 7860 localhost:5901 &
+websockify --web /usr/share/novnc 7860 localhost:5901 &
 sleep 2
 
 # ---------- 启动 qwenpaw ----------

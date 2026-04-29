@@ -47,13 +47,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && printf 'vncpass\nvncpass\nn\n' | tigervncpasswd \
     && chmod 600 /root/.vnc/passwd
 
-# ---------- 第五层：noVNC ----------
-ENV NO_VNC_VERSION=1.5.0
-RUN mkdir -p /opt/noVNC \
-    && cd /opt/noVNC \
-    && wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz | tar xz --strip-components=1 \
-    && wget -qO- https://github.com/novnc/websockify/archive/refs/tags/v0.12.0.tar.gz | tar xz \
-    && mv websockify-0.12.0 /opt/noVNC/utils/websockify
+# ---------- 第五层：noVNC（Debian 包已包含，只需确认） ----------
+RUN echo "noVNC $(dpkg -l novnc 2>/dev/null | tail -1 | awk '{print $3}')  已安装于 /usr/share/novnc"
 
 # ---------- 第六层：Chrome ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
