@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gtk2-engines-murrine gtk2-engines-pixbuf \
     && rm -rf /var/lib/apt/lists/*
 
-# ---------- 第四层：VNC 服务器 + 生成密码文件 ----------
+# ---------- 第四层：VNC 服务器 ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tigervnc-standalone-server tigervnc-common tigervnc-tools \
     && rm -rf /var/lib/apt/lists/* \
@@ -47,10 +47,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && printf 'vncpass\nvncpass\nn\n' | tigervncpasswd \
     && chmod 600 /root/.vnc/passwd
 
-# ---------- 第五层：Chrome ----------
+# ---------- 第五层：Chrome（Google Chrome，加超时重试） ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget gnupg \
-    && wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && wget -q --timeout=60 --tries=3 \
+       https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
     && apt-get update \
     && apt-get install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb \
     && rm google-chrome-stable_current_amd64.deb \
@@ -59,7 +60,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ---------- 第六层：uv ----------
 RUN pip install --break-system-packages uv
 
-# ---------- 第七层：qwenpaw（hermes-agent 方案：用系统 Python 建 venv） ----------
+# ---------- 第七层：qwenpaw ----------
 RUN python3 -m venv /root/.qwenpaw/venv \
     && uv pip install --python /root/.qwenpaw/venv/bin/python --no-cache qwenpaw \
     && ln -sf /root/.qwenpaw/venv/bin/qwenpaw /usr/local/bin/qwenpaw \
