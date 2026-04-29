@@ -107,11 +107,16 @@ h = re.sub(
 )
 h = re.sub(
     r"(UI\.start\(defaults, document\.getElementById\('noVNC_screen'\)\);)",
-    r"\1\n        setTimeout(function() { UI.connect(); }, 500);",
+    r"defaults.connect = true;\n        defaults.auto_reconnect = true;\n        \1",
     h
 )
-with open("/opt/noVNC/index.html", 'w') as f: f.write(h)
-print("Created index.html")
+with open("/opt/noVNC/vnc.html", 'w') as f: f.write(h)
+# 清理旧 index.html（避免干扰）
+old_idx = "/opt/noVNC/index.html"
+if os.path.exists(old_idx):
+    os.remove(old_idx)
+    print("Removed old index.html")
+print("Patched vnc.html (auto-connect enabled)")
 PYEOF
 
 echo "=== 启动双向同步 ==="
